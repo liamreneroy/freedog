@@ -4,7 +4,7 @@ from ucl.highState import highState
 from ucl.lowCmd import lowCmd
 from ucl.unitreeConnection import unitreeConnection, HIGH_WIFI_DEFAULTS, HIGH_WIRED_DEFAULTS
 from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
-from ucl.complex import motorCmd
+from ucl.complex import motorCmd, led
 import time
 
 
@@ -55,24 +55,24 @@ time.sleep(1)
 print()
 
 
-motiontime = 0
+motiontime = 0      # Initializaion
 
-# Initializaion
-print(f"MotionTime: null")
-print("Executing: RECOVERY\n")
+print(f"MotionTime: null")              # Allows robo to start from any state: IDLE / FORCE_STAND / DAMPED
+print("Executing: RECOVERY\n")    
 hcmd.mode = MotorModeHigh.RECOVERY
 cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
 conn.send(cmd_bytes)                    # Send the command
-time.sleep(0.2)
+time.sleep(1)                           # Sleep for 1 second
 
-print(f"MotionTime: 0")
+
+print(f"MotionTime: 0")                 # Put robot in into standing state to start
 print("Executing: FORCE_STAND\n")
 hcmd.mode = MotorModeHigh.FORCE_STAND
 hcmd.euler = [0, 0, 0]
 hcmd.bodyHeight = 0.0
 cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
 conn.send(cmd_bytes)                    # Send the command
-time.sleep(0.2)
+time.sleep(1)                           # Sleep for 1 second
 
 
 while True:
@@ -80,7 +80,7 @@ while True:
     motiontime += 1         # Increment motion time counter
     time.sleep(0.002)       # Sleep to achieve desired time interval (in seconds)
 
-    if motiontime % 10 == 0: #Print every 10 cycles
+    if motiontime % 50 == 0: #Print every 50 cycles
         print(f"MotionTime: {motiontime}\n")
     
     data = conn.getData()
@@ -91,42 +91,72 @@ while True:
     if(motiontime >= 0 and motiontime < 1000):
         hcmd.mode = MotorModeHigh.IDLE
 
-    
     if(motiontime >= 1000 and motiontime < 2000):
-        hcmd.mode = MotorModeHigh.FORCE_STAND
-        hcmd.euler = [0, 0.2, 0]
-
-
-    if(motiontime >= 3000 and motiontime < 4000):
         hcmd.mode = MotorModeHigh.FORCE_STAND
         hcmd.euler = [0, -0.3, 0]
 
+    if(motiontime >= 2000 and motiontime < 3000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0.3, 0]
 
-    if(motiontime >= 4000 and motiontime < 6000):
+    if(motiontime >= 3000 and motiontime < 4000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [-0.4, 0, 0]
+
+    if(motiontime >= 4000 and motiontime < 5000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0.4, 0, 0]
+
+    if(motiontime >= 5000 and motiontime < 6000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0, -0.2]
+
+    if(motiontime >= 6000 and motiontime < 7000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0, 0.2]
+
+    if(motiontime >= 7000 and motiontime < 8500):
         hcmd.mode = MotorModeHigh.FORCE_STAND
         hcmd.euler = [0, 0, 0]
+        hcmd.bodyHeight = -0.2
 
+    if(motiontime >= 8500 and motiontime < 10000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0, 0]
+        hcmd.bodyHeight = 0.0
+
+    if(motiontime >= 10000 and motiontime < 11500):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0, 0]
+        hcmd.bodyHeight = 0.075
+
+    if(motiontime >= 11500 and motiontime < 13000):
+        hcmd.mode = MotorModeHigh.FORCE_STAND
+        hcmd.euler = [0, 0, 0]
+        hcmd.bodyHeight = 0.0
+
+    if motiontime >= 13000:
+        print("Executing: STAND_DOWN")
+        hcmd.mode = MotorModeHigh.STAND_DOWN
+        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the lay-down command
+        conn.send(cmd_bytes)                    # Send the lay-down command
+        time.sleep(1)                           # Sleep for 1 second
+
+        print("Executing: IDLE")
+        hcmd.mode = MotorModeHigh.IDLE
+        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the idle command
+        conn.send(cmd_bytes)                    # Send the idle command
+        time.sleep(0.5)                         # Sleep for 0.5 second
+
+        print("Executing: DAMPING")
+        hcmd.mode = MotorModeHigh.DAMPING
+        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the final command
+        conn.send(cmd_bytes)                    # Send the final command
+        time.sleep(1)                           # Sleep for 1 second
+        break                                   # Break connection at end
 
     cmd_bytes = hcmd.buildCmd(debug=False)      # Build the command
     conn.send(cmd_bytes)                        # Send the command
-
-
-    if motiontime >= 6000:
-        print("Executing: STAND_DOWN")
-        hcmd.mode = MotorModeHigh.STAND_DOWN
-        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
-        conn.send(cmd_bytes)                    # Send the command
-        time.sleep(1)
-
-        print("Executing: DAMPING")
-        hcmd.mode = MotorModeHigh.IDLE
-        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
-        conn.send(cmd_bytes)                    # Send the command
-        time.sleep(1)
-        break                                   # Break connection at end
-
-
-
 
 
 
