@@ -22,7 +22,7 @@ class GaitType(Enum):
     CLIMB_STAIR = 2
     TROT_OBSTACLE = 3
 
-class SpeedLevel(Enum):
+class SpeedLevel(Enum):  # edited to make floats (cant - create extra)
     LOW_SPEED = 0
     MEDIUM_SPEED = 1
     HIGH_SPEED = 2
