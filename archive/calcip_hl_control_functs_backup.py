@@ -16,18 +16,43 @@ import math
 # conn = unitreeConnection(MY_CONNECTION_SETTINGS)
 
 
-def roll_shake(publish_hz=250, granularity_override=None, amplitude=0.7, frequency=1, reversed=False):
+
+
+def initialize(connection_obj):
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def roll_sin(publish_hz=250, granularity_override=None, amplitude=0.7, frequency=1, reversed=False):
     '''ARG RANGES:
     publish_hz = [50, 500] (Hz) -> smaller equals faster execution time. If robot acting weird, try decreasing this value. Recommended 100+ 
     
-    granularity_override = [100, 4000] (cycles) -> smaller equals slightly faster but choppier execution. Recommended 500+ for smooth motion.
+    granularity_override = [100, 4000] (number of cycles) -> smaller equals slightly faster but choppier execution. Recommended 500+ for smooth motion.
     
     amplitude = [0, 0.8] (radians) -> smaller equals less roll angle. Recommended 0.6 for full roll angle.
     
     frequency = [1, 3] (cycles) -> quantity equals number of oscillations. Recommended 1 for one oscillation. 
                                    Value over 1 may trigger an override of publish_hz and granularity.
     
-    reversed = [True, False] -> True reverses the direction of the roll_shake
+    reversed = [True, False] -> True reverses the direction of the roll_sin
     
     
     Note: You want to proportionally set your publishing_hz and granularity. 
@@ -74,7 +99,7 @@ def roll_shake(publish_hz=250, granularity_override=None, amplitude=0.7, frequen
         amplitude = -amplitude
 
 
-    print('roll_shake ::: Publishing at {}Hz\n'.format(publish_hz))
+    print('roll_sin ::: Publishing at {}Hz\n'.format(publish_hz))
 
     for timestep in range(0, granularity+1):    # Not sure if I need the +1 but this makes it start/end at zero
         time.sleep(float(1./publish_hz))        # Average  --> Sleep to achieve desired 0.002 time interval (in seconds)
@@ -106,7 +131,6 @@ def roll_shake(publish_hz=250, granularity_override=None, amplitude=0.7, frequen
 
 
 
-print(f'Running lib version: {lib_version()}')
 
 conn = unitreeConnection(HIGH_WIFI_DEFAULTS)    # Creates a new connection object with HIGH_WIFI_DEFAULTS named 'conn'
 conn.startRecv()                                # Starts up connection 
@@ -144,7 +168,6 @@ print("Initiating Control Loop...") # Some time to collect packets ;)
 time.sleep(1)                                 
 print()
 
-
 motiontime = 0      # Initializaion
 
 print(f"MotionTime: null")              # Allows robo to start from any state: IDLE / FORCE_STAND / DAMPED
@@ -172,15 +195,15 @@ while True:
         hstate.parseData(paket)
 
     # Control commands here
-    roll_shake()
+    roll_sin()
 
     time.sleep(1)
 
-    roll_shake(frequency=2)
+    roll_sin(frequency=2)
 
     time.sleep(1)
 
-    roll_shake()
+    roll_sin()
 
     print("Executing: STAND_DOWN")
     hcmd.mode = MotorModeHigh.STAND_DOWN
