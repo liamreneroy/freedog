@@ -117,7 +117,7 @@ def terminate_control(conn, hcmd):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def roll_sin(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.7, frequency=1, reversed=False):
+def sin_roll(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.6, frequency=1, reversed=False):
     '''ARG RANGES:
     publish_hz = [50, 500] (Hz) -> smaller equals faster execution time. If robot acting weird, try decreasing this value. Recommended 100+ 
     
@@ -128,7 +128,7 @@ def roll_sin(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.
     frequency = [1, 3] (cycles) -> quantity equals number of oscillations. Recommended 1 for one oscillation. 
                                    Value over 1 may trigger an override of publish_hz and granularity.
     
-    reversed = [True, False] -> True reverses the direction of the roll_sin
+    reversed = [True, False] -> True reverses the direction of the sin_roll
     
     
     Note: You want to proportionally set your publishing_hz and granularity. 
@@ -176,7 +176,7 @@ def roll_sin(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.
         amplitude = -amplitude
 
     print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
-    print('>> Executing: roll_sin ::: Publishing at {}Hz\n'.format(publish_hz))
+    print('>> Executing: sin_roll ::: Publishing at {}Hz\n'.format(publish_hz))
     print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
 
     for timestep in range(0, granularity+1):    # Not sure if I need the +1 but this makes it start/end at zero
@@ -195,6 +195,172 @@ def roll_sin(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def sin_pitch(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.6, frequency=1, reversed=False):
+    '''ARG RANGES:
+    publish_hz = [50, 500] (Hz) -> smaller equals faster execution time. If robot acting weird, try decreasing this value. Recommended 100+ 
+    
+    granularity_override = [100, 4000] (number of cycles) -> smaller equals slightly faster but choppier execution. Recommended 500+ for smooth motion.
+    
+    amplitude = [0, 0.8] (radians) -> smaller equals less pitch angle. Recommended 0.6 for full pitch angle.
+    
+    frequency = [1, 3] (cycles) -> quantity equals number of oscillations. Recommended 1 for one oscillation. 
+                                   Value over 1 may trigger an override of publish_hz and granularity.
+    
+    reversed = [True, False] -> True reverses the direction of the sin_pitch
+    
+    
+    Note: You want to proportionally set your publishing_hz and granularity. 
+          If publish_hz is high [250], granularity should likely be set to 2-3x that value [500-750]. 
+    '''
+
+    granularity_multiplier = 3   # Either 2x or 3x publish_hz is recommended
+
+    # Check if frequency is valid
+    if isinstance(frequency, int) == False or frequency > 3:
+        raise ValueError("frequency must be integer and within range [1, 3]")
+
+    if granularity_override:
+        # Check if granularity_override is valid
+        if granularity_override % 10 != 0 or granularity > 4000 or granularity < 100:
+            raise ValueError("granularity_override must be integer, divisible by 10 and within range [100, 4000]")
+        
+    # Override frequency and granularity if frequency/publishing_hz is too high
+    if frequency >= 2 and publish_hz > 250:
+        publish_hz = 250
+        granularity_override = publish_hz * granularity_multiplier
+        print(f"WARNING: Combination of frequency and publish_hz to high -> Overriding publish_hz to {publish_hz}")
+
+    # Override granularity if granularity_override is set
+    if granularity_override == None:
+        granularity = publish_hz * granularity_multiplier
+    else:
+        granularity = granularity_override
+        print(f"WARNING: Overriding granularity to {granularity_override} [recommended 2-3x publish_hz]")
+
+    # Check if publish_hz is valid
+    if isinstance(publish_hz, int) == False or publish_hz > 500 or publish_hz < 50:
+        raise ValueError("publish_hz must be integer and within range [50, 500]")
+    
+    # Check if granularity is valid
+    if granularity % 10 != 0 or granularity > 4000 or granularity < 100:
+        raise ValueError("granularity must be integer, divisible by 10 and within range [100, 4000]")
+    
+    # Check if amplitude is valid
+    if isinstance(amplitude, float) == False or amplitude > 0.8 or amplitude < 0:
+        raise ValueError("amplitude must be float and within range [0, 0.8]")
+
+    # Reverse the direction of the pitch if set to True
+    if reversed == True: 
+        amplitude = -amplitude
+
+    print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
+    print('>> Executing: sin_pitch ::: Publishing at {}Hz\n'.format(publish_hz))
+    print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
+
+    for timestep in range(0, granularity+1):    # Not sure if I need the +1 but this makes it start/end at zero
+        time.sleep(float(1./publish_hz))        # Average  --> Sleep to achieve desired 0.002 time interval (in seconds)
+
+        # Set highCmd values 
+        hcmd.mode = MotorModeHigh.FORCE_STAND   
+        hcmd.euler = [0, amplitude * math.sin(frequency * timestep / granularity * ((math.pi)*2)), 0]
+
+        if timestep % 10 == 0:                  #Print every 10 cycles
+            print(f"TimeStep: {timestep} ,  Pitch Angle: {hcmd.euler}\n")
+
+        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
+        conn.send(cmd_bytes)                    # Send the command
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+def sin_yaw(conn, hcmd, publish_hz=250, granularity_override=None, amplitude=0.5, frequency=1, reversed=False):
+    '''ARG RANGES:
+    publish_hz = [50, 500] (Hz) -> smaller equals faster execution time. If robot acting weird, try decreasing this value. Recommended 100+ 
+    
+    granularity_override = [100, 4000] (number of cycles) -> smaller equals slightly faster but choppier execution. Recommended 500+ for smooth motion.
+    
+    amplitude = [0, 0.8] (radians) -> smaller equals less yaw angle. Recommended 0.6 for full yaw angle.
+    
+    frequency = [1, 3] (cycles) -> quantity equals number of oscillations. Recommended 1 for one oscillation. 
+                                   Value over 1 may trigger an override of publish_hz and granularity.
+    
+    reversed = [True, False] -> True reverses the direction of the sin_yaw
+    
+    
+    Note: You want to proportionally set your publishing_hz and granularity. 
+          If publish_hz is high [250], granularity should likely be set to 2-3x that value [500-750]. 
+    '''
+
+    granularity_multiplier = 3   # Either 2x or 3x publish_hz is recommended
+
+    # Check if frequency is valid
+    if isinstance(frequency, int) == False or frequency > 3:
+        raise ValueError("frequency must be integer and within range [1, 3]")
+
+    if granularity_override:
+        # Check if granularity_override is valid
+        if granularity_override % 10 != 0 or granularity > 4000 or granularity < 100:
+            raise ValueError("granularity_override must be integer, divisible by 10 and within range [100, 4000]")
+        
+    # Override frequency and granularity if frequency/publishing_hz is too high
+    if frequency >= 2 and publish_hz > 250:
+        publish_hz = 250
+        granularity_override = publish_hz * granularity_multiplier
+        print(f"WARNING: Combination of frequency and publish_hz to high -> Overriding publish_hz to {publish_hz}")
+
+    # Override granularity if granularity_override is set
+    if granularity_override == None:
+        granularity = publish_hz * granularity_multiplier
+    else:
+        granularity = granularity_override
+        print(f"WARNING: Overriding granularity to {granularity_override} [recommended 2-3x publish_hz]")
+
+    # Check if publish_hz is valid
+    if isinstance(publish_hz, int) == False or publish_hz > 500 or publish_hz < 50:
+        raise ValueError("publish_hz must be integer and within range [50, 500]")
+    
+    # Check if granularity is valid
+    if granularity % 10 != 0 or granularity > 4000 or granularity < 100:
+        raise ValueError("granularity must be integer, divisible by 10 and within range [100, 4000]")
+    
+    # Check if amplitude is valid
+    if isinstance(amplitude, float) == False or amplitude > 0.8 or amplitude < 0:
+        raise ValueError("amplitude must be float and within range [0, 0.8]")
+
+    # Reverse the direction of the yaw if set to True
+    if reversed == True: 
+        amplitude = -amplitude
+
+    print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
+    print('>> Executing: sin_yaw ::: Publishing at {}Hz\n'.format(publish_hz))
+    print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
+
+    for timestep in range(0, granularity+1):    # Not sure if I need the +1 but this makes it start/end at zero
+        time.sleep(float(1./publish_hz))        # Average  --> Sleep to achieve desired 0.002 time interval (in seconds)
+
+        # Set highCmd values 
+        hcmd.mode = MotorModeHigh.FORCE_STAND   
+        hcmd.euler = [0, 0, amplitude * math.sin(frequency * timestep / granularity * ((math.pi)*2))]
+
+        if timestep % 10 == 0:                  #Print every 10 cycles
+            print(f"TimeStep: {timestep} ,  Yaw Angle: {hcmd.euler}\n")
+
+        cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
+        conn.send(cmd_bytes)                    # Send the command
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
 
 
 
