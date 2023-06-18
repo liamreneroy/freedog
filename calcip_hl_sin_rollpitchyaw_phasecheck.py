@@ -5,9 +5,12 @@ from ucl.lowCmd import lowCmd
 from ucl.unitreeConnection import unitreeConnection, HIGH_WIFI_DEFAULTS, HIGH_WIRED_DEFAULTS
 from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
 from ucl.complex import motorCmd, led
+
+import calcip_hl_control_functs as chcf
+
 import time
 import math
-import calcip_hl_control_functs as chcf
+import numpy as np
 
 
 def main():
@@ -20,6 +23,10 @@ def main():
     # Recover Control
     chcf.recover_control(conn=connect_obj, hcmd=highCmd_obj)
 
+    # Get user to hit enter to continue
+    print("WARNING: Ensure robot is placed in an open space\nHit 'enter' to continue...")
+    input()
+    
     # Control loop
     terminate = False
     while terminate == False:
@@ -27,21 +34,16 @@ def main():
         # Parse data    
         chcf.parse_data(conn=connect_obj, hstate=highState_obj)
 
-        # Control commands here
-        chcf.sin_roll(conn=connect_obj, hcmd=highCmd_obj)
-        time.sleep(2)
-        chcf.sin_roll(conn=connect_obj, hcmd=highCmd_obj, frequency=2)
-        time.sleep(2)  
-
-        chcf.sin_pitch(conn=connect_obj, hcmd=highCmd_obj)
-        time.sleep(2)
-        chcf.sin_pitch(conn=connect_obj, hcmd=highCmd_obj, frequency=2)
-        time.sleep(2)  
-
-        chcf.sin_yaw(conn=connect_obj, hcmd=highCmd_obj)
-        time.sleep(2)
-        chcf.sin_yaw(conn=connect_obj, hcmd=highCmd_obj, frequency=2)
-        time.sleep(2)  
+        # Control commands here (see calcip_hl_control_functs.py)
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=0.01, loop_repeats=3, 
+                     rollpitchyaw_array=np.array([False, True, True]),
+                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     offset_array=np.array([0, 0, 0]), 
+                     period_array=np.array([1, 0.5, 1]), 
+                     phase_array=np.array([0, -math.pi/4, 0]), 
+                     dev_check=True,
+                     printer=True)
+        time.sleep(3)  
 
         # Terminate control
         terminate = chcf.terminate_control(conn=connect_obj, hcmd=highCmd_obj)
