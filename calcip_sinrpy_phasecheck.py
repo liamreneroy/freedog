@@ -37,7 +37,7 @@ def main():
         # Control commands here (see calcip_hl_control_functs.py)
         chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=0.01, loop_repeats=3, 
                      rollpitchyaw_array=np.array([False, True, True]),
-                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
                      period_array=np.array([1, 0.5, 1]), 
                      phase_array=np.array([0, -math.pi/4, 0]), 

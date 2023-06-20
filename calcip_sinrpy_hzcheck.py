@@ -35,9 +35,9 @@ def main():
         chcf.parse_data(conn=connect_obj, hstate=highState_obj)
 
         # Control commands here (see calcip_hl_control_functs.py)
-        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=200, sleep_override=None, loop_repeats=3, 
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=200, sleep_override=None, loop_repeats=6, 
                      rollpitchyaw_array=np.array([True, True, False]),
-                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
                      period_array=np.array([1, 1, 1]), 
                      phase_array=np.array([0, 0, 0]), 
@@ -45,9 +45,9 @@ def main():
                      printer=True)
         time.sleep(3)  
 
-        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=None, loop_repeats=3, 
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=None, loop_repeats=6, 
                      rollpitchyaw_array=np.array([True, True, False]),
-                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
                      period_array=np.array([1, 1, 1]), 
                      phase_array=np.array([0, 0, 0]), 
@@ -55,9 +55,9 @@ def main():
                      printer=True)
         time.sleep(3)  
  
-        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=0.01, loop_repeats=3, 
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=0.01, loop_repeats=6, 
                      rollpitchyaw_array=np.array([True, True, False]),
-                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
                      period_array=np.array([1, 1, 1]), 
                      phase_array=np.array([0, 0, 0]), 

@@ -99,6 +99,14 @@ def recover_control(conn, hcmd):
 
 def terminate_control(conn, hcmd):
 
+    print(">> Executing: FORCE_STAND\n")    # Put robot back into neutral standing state
+    hcmd.mode = MotorModeHigh.FORCE_STAND
+    hcmd.euler = [0, 0, 0]
+    hcmd.bodyHeight = 0.0
+    cmd_bytes = hcmd.buildCmd(debug=False)  # Build the stand command
+    conn.send(cmd_bytes)                    # Send the stand command
+    time.sleep(1)                           # Sleep for 1 second
+
     print(">> Executing: STAND_DOWN\n")
     hcmd.mode = MotorModeHigh.STAND_DOWN
     cmd_bytes = hcmd.buildCmd(debug=False)  # Build the lay-down command
@@ -125,7 +133,7 @@ def terminate_control(conn, hcmd):
 
 def sin_rollpitchyaw(conn, hcmd, publish_hz=200, sleep_override=None, loop_repeats=2, 
                      rollpitchyaw_array=np.array([False, False, False]),
-                     amplitude_array=np.array([0.5, 0.5, 0.5]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
                      period_array=np.array([1, 1, 1]), 
                      phase_array=np.array([0, 0, 0]), 
