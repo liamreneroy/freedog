@@ -254,15 +254,10 @@ def sin_rollpitchyaw(conn, hcmd, publish_hz=200, sleep_override=None, loop_repea
         print("Check set values and hit 'enter' to execute. 'ctrl + c' to abort.")
         input()
 
-    if printer:
-        a = datetime.datetime.now()
 
-    start = time.time()
 
-    i = 0
     for timestep in range(0, publish_hz*loop_repeats):
-        i += 1
-        
+
         # Set highCmd values 
         hcmd.mode = MotorModeHigh.FORCE_STAND   
         hcmd.euler = np.multiply(np.array([
@@ -278,17 +273,13 @@ def sin_rollpitchyaw(conn, hcmd, publish_hz=200, sleep_override=None, loop_repea
                 a = datetime.datetime.now()
                 print(f'TimeStep: {timestep:04d} \t  Euler RPY Angle: {hcmd.euler} \t LoopRate: {c.total_seconds()} secs\n')
                 continue
-            # print(f'TimeStep: {timestep:04d} \t  Euler RPY Angle: {hcmd.euler}\n')  # Comment out if you dont want to see every timestep
+            
+            print(f'TimeStep: {timestep:04d} \t  Euler RPY Angle: {hcmd.euler}\n')
 
         cmd_bytes = hcmd.buildCmd(debug=False)  # Build the command
         conn.send(cmd_bytes)                    # Send the command
 
-
-        remaining_delay = max(start + (i * sleep_rate) - time.time(), 0)
-        # print("remaining delay: %s" % remaining_delay) # Uncomment to see remaining delay
-
-        time.sleep(remaining_delay)        # Sleep for the remaining delay
-
+        time.sleep(float(sleep_rate))           # Average  --> Pub Rate: Shouldn't dip below 0.002 - test w/ MacBook for proper sleeptime 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
