@@ -6,7 +6,7 @@ from ucl.unitreeConnection import unitreeConnection, HIGH_WIFI_DEFAULTS, HIGH_WI
 from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
 from ucl.complex import motorCmd, led
 
-import calcip_hl_control_functs as chcf
+import archive.calcip_hl_motorctrl_stable as chcf
 
 import time
 import math
@@ -35,12 +35,32 @@ def main():
         chcf.parse_data(conn=connect_obj, hstate=highState_obj)
 
         # Control commands here (see calcip_hl_control_functs.py)
-        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, sleep_override=0.01, loop_repeats=3, 
-                     rollpitchyaw_array=np.array([False, True, True]),
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=200, set_bpm=170, sleep_override=None, loop_repeats=6, 
+                     rollpitchyaw_array=np.array([True, True, False]),
                      amplitude_array=np.array([0.5, 0.5, 0.4]),
                      offset_array=np.array([0, 0, 0]), 
-                     period_array=np.array([1, 0.5, 1]), 
-                     phase_array=np.array([0, -math.pi/4, 0]), 
+                     period_array=np.array([1, 1, 1]), 
+                     phase_array=np.array([0, 0, 0]), 
+                     dev_check=True,
+                     printer=True)
+        time.sleep(3)  
+
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, set_bpm=75, sleep_override=None, loop_repeats=6, 
+                     rollpitchyaw_array=np.array([True, True, False]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
+                     offset_array=np.array([0, 0, 0]), 
+                     period_array=np.array([1, 1, 1]), 
+                     phase_array=np.array([0, 0, 0]), 
+                     dev_check=True,
+                     printer=True)
+        time.sleep(3)  
+ 
+        chcf.sin_rollpitchyaw(connect_obj, highCmd_obj, publish_hz=500, set_bpm=0, sleep_override=None, loop_repeats=6, 
+                     rollpitchyaw_array=np.array([True, True, False]),
+                     amplitude_array=np.array([0.5, 0.5, 0.4]),
+                     offset_array=np.array([0, 0, 0]), 
+                     period_array=np.array([1, 1, 1]), 
+                     phase_array=np.array([0, 0, 0]), 
                      dev_check=True,
                      printer=True)
         time.sleep(3)  
