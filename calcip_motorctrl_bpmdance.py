@@ -36,41 +36,67 @@ def main():
 
         # Control commands here (see calcip_hl_control_functs.py)
 
+        # motor_control_obj.rollpitchyaw_dance(mode='default', ctrl_function=math.sin, 
+        #                         publish_hz=200, bpm=30, 
+        #                         sleep_override=None, loop_repeats=8, 
+        #                         rollpitchyaw_array=np.array([0, 1, 0]),
+        #                         amplitude_array=np.array([0.5, 0.5, 0.4]),
+        #                         offset_array=np.array([0, 0, 0]), 
+        #                         period_array=np.array([1, 0.5, 1]), 
+        #                         phase_array=np.array([0, -math.pi/4, 0]), 
+        #                         dev_check=True,
+        #                         printer=True)
+        # time.sleep(2)
 
-        motor_control_obj.rollpitchyaw_control(ctrl_function=math.sin, publish_hz=200, bpm=20, 
-                                sleep_override=None, loop_repeats=6, 
+        # motor_control_obj.rollpitchyaw_dance(mode='default', ctrl_function=math.sin, 
+        #                         publish_hz=200, bpm=30, 
+        #                         sleep_override=None, loop_repeats=8, 
+        #                         rollpitchyaw_array=np.array([0, 1, 0]),
+        #                         amplitude_array=np.array([0.5, 0.5, 0.4]),
+        #                         offset_array=np.array([0, 0, 0]), 
+        #                         period_array=np.array([2, 1, 2]), 
+        #                         phase_array=np.array([0, -math.pi/4, 0]), 
+        #                         dev_check=True,
+        #                         printer=True)
+        # time.sleep(2)
+
+        # motor_control_obj.rollpitchyaw_dance(mode='default', ctrl_function=math.sin, 
+        #                         publish_hz=200, bpm=30, 
+        #                         sleep_override=None, loop_repeats=8, 
+        #                         rollpitchyaw_array=np.array([0, 1, 0]),
+        #                         amplitude_array=np.array([0.5, 0.5, 0.4]),
+        #                         offset_array=np.array([0, 0, 0]), 
+        #                         period_array=np.array([2, 1, 2]), 
+        #                         phase_array=np.array([0, 0, 0]), 
+        #                         dev_check=True,
+        #                         printer=True)
+        # time.sleep(2)
+
+        motor_control_obj.rollpitchyaw_dance(mode='dance', ctrl_function=math.sin, 
+                                publish_hz=200, bpm=30, 
+                                sleep_override=None, loop_repeats=16, 
                                 rollpitchyaw_array=np.array([1, 1, 0]),
                                 amplitude_array=np.array([0.5, 0.5, 0.4]),
                                 offset_array=np.array([0, 0, 0]), 
-                                period_array=np.array([1, 0.5, 1]), 
+                                period_array=np.array([1, 2, 1]), 
                                 phase_array=np.array([0, 0, 0]), 
                                 dev_check=True,
                                 printer=True)
-        time.sleep(3)  
+        time.sleep(2)
 
 
-        motor_control_obj.rollpitchyaw_dance(ctrl_function=math.sin, publish_hz=200, bpm=20, 
-                                sleep_override=None, loop_repeats=10, 
-                                rollpitchyaw_array=np.array([1, 1, 0]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0, 0, 0]), 
-                                period_array=np.array([1, 0.5, 1]), 
-                                phase_array=np.array([0, 0, 0]), 
-                                dev_check=True,
-                                printer=True)
-        time.sleep(3)  
+        # motor_control_obj.rollpitchyaw_dance(mode='dance', ctrl_function=math.sin, 
+        #                         publish_hz=200, bpm=45, 
+        #                         sleep_override=None, loop_repeats=16, 
+        #                         rollpitchyaw_array=np.array([1, 1, 0]),
+        #                         amplitude_array=np.array([0.5, 0.5, 0.4]),
+        #                         offset_array=np.array([0, 0, 0]), 
+        #                         period_array=np.array([1, 1, 1]), 
+        #                         phase_array=np.array([0, 0, 0]), 
+        #                         dev_check=True,
+        #                         printer=True)
+        # time.sleep(2)
 
-
-        motor_control_obj.rollpitchyaw_dance(ctrl_function=math.sin, publish_hz=200, bpm=40, 
-                                sleep_override=None, loop_repeats=10, 
-                                rollpitchyaw_array=np.array([1, 1, 0]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0, 0, 0]), 
-                                period_array=np.array([1, 0.5, 1]), 
-                                phase_array=np.array([0, 0, 0]), 
-                                dev_check=True,
-                                printer=True)
-        time.sleep(3)  
 
         # Terminate control
         terminate = motor_control_obj.terminate_control()
