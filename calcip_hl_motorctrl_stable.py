@@ -162,10 +162,25 @@ class MotorControl:
                                          random.uniform(0.3, 0.5) * random.choice([-1, 1]),
                                          random.uniform(0.3, 0.4) * random.choice([-1, 1])])
         
-        self.period_array=np.array([random.choice([0.5, 1]), 
-                                    random.choice([0.5, 1]), 
-                                    random.choice([0.5, 1])])
+        self.period_array=np.array([random.choice([0.5, 1, 2]), 
+                                    random.choice([0.5, 1, 2]), 
+                                    random.choice([0.5, 1, 2])])
         
+        # Check if bpm is greater than 45 and override period <1 to value: 1
+        if self.bpm > 45:
+            for index_012 in range(0,3):
+                if self.period_array[index_012] < 1:
+                    self.period_array[2] = 1
+        
+        self.phase_array=np.array([0, 0, 0]) 
+
+        # ToDo: Check with this on and off see performance difference
+        # Check if period is 0.5 and override phase to -math.pi/4 (sin function only)
+        if self.ctrl_function == math.sin:
+            for index_012 in range(0,3):
+                if self.period_array[index_012] == 0.5:
+                    self.phase_array[index_012] = -math.pi/4
+
         print(f'>> New Traject @ timestep: {self.timestep}\n')
 
         return
@@ -232,12 +247,12 @@ class MotorControl:
 
     def status_printer(self):
             print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
-            print(f'>> Executing: rollpitchyaw @ timestep: {self.timestep}')
+            print(f'>> Executing: rollpitchyaw in [{self.mode}] mode @ timestep: {self.timestep}\n')
             print(f'::: Control Function: {self.ctrl_function.__name__} \t(funct which dictates motion trajectory)')
             print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
             print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
-            print(f'::: Sleep Rate: {self.sleep_rate} secs \t(Sleeps {self.sleep_rate} secs per msg)\n')
-            print(f'RESULTING LOOP RATE: {self.loop_rate} \t(Approx. {self.loop_rate} second per loop)\n')
+            print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
+            print(f'RESULTING LOOP RATE: {self.loop_rate:0.3f} \t(Approx. {self.loop_rate:0.3f} second(s) per loop)\n')
             print(f'::: RollPitchYaw: \t{self.rollpitchyaw_array}')
             print(f'::: Amplitude: \t\t{self.amplitude_array}')
             print(f'::: Period: \t\t{self.period_array}')
@@ -257,12 +272,12 @@ class MotorControl:
             
         # Check if period is valid
         for period in self.period_array:
-            if period > 10 or period < 1./3:
-                raise ValueError("period values must be within range [1/3, 10] for each euler angle\n")
+            if period > 16 or period < 0.5:
+                raise ValueError("period values must be within range [0.5, 16] for each euler angle\n")
 
         # Check if period and publish_hz combo is beyond safety limiter and override publish_hz if necessary 
         for period in self.period_array:
-            if period < 0.5 and self.publish_hz > 250:
+            if period < 1 and self.publish_hz > 250:
                 print(f"WARNING: Combination of low period {period} and publish_hz {self.publish_hz} is beyond safety limiter")
                 self.publish_hz = 250
                 self.sleep_rate = 1 / int(self.publish_hz)
@@ -294,139 +309,21 @@ class MotorControl:
             print(f'WARNING: Loop rate of {self.loop_rate} is less than 1 [1sec/loop]')
             print('::: Robot may move quickly and could damage itself\n')
 
-        # Check if bpm is greater than 40 and override yaw period <1 to value: 1
-        if self.bpm > 40 and self.period_array[2] < 1:
-            self.period_array[2] = 1
-            print(f'WARNING: BPM of {self.bpm} is greater than 40 with yaw period <1')
-            print('::: Overriding yaw period <1 to value: 1\n')
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # ToDo: old - remove this
-    def rollpitchyaw_control(self, ctrl_function=math.sin, publish_hz=200, bpm=60, 
-                            sleep_override=None, loop_repeats=2, 
-                            rollpitchyaw_array=np.array([1, 1, 1]),
-                            amplitude_array=np.array([0.5, 0.5, 0.4]),
-                            offset_array=np.array([0, 0, 0]), 
-                            period_array=np.array([1, 1, 1]), 
-                            phase_array=np.array([0, 0, 0]), 
-                            dev_check=True,
-                            printer=True):
+        # Check if bpm is greater than 45 and override yaw period <1 to value: 1
+        if self.bpm > 45:
+            print(f'WARNING: BPM of {self.bpm} is greater than 45 with yaw period <1')
+            print('::: Overriding periods <1 to value: 1\n')
+            for index_012 in range(0,3):
+                if self.period_array[index_012] < 1:
+                    self.period_array[2] = 1
         
-        '''ARG RANGES:
-        recall y = Asin(B(x + C)) + D   ///   A = amplitude, 2pi/B = period, C = phase shift, D = offset
+        # ToDo: Check with this on and off see performance difference
+        # Check if period is 0.5 and override phase to -math.pi/4 (sin function only)
+        if self.ctrl_function == math.sin:
+            for index_012 in range(0,3):
+                if self.period_array[index_012] == 0.5:
+                    self.phase_array[index_012] = -math.pi/4
 
-        publish_hz = [50, 1000] (Hz - integer) -> Number of msgs being sent per loop. Smoother motion at higher hz but more comp expensive. 
-                                                If robot acting undesirably, try decreasing this value. Recommended 100+ 
-        
-        set_bpm = [1, 60] (bpm - integer) -> Sets the bpm at which the loops of the robot execute. If nothing is set, the robot will move
-                                             at a rate of one control loop per second -> 1 loop/sec = 1 beat per sec = 60BPM. 
-                                             Any specified BPM greater than 100 will be halved until within range [0-100]. Recommended value: 50-100                                             
-
-        sleep_override = [0.001, 0.1] (integer) ->  Sets the number of seconds that each loop will sleep for. Setting this breaks the loop_rate=1 [1sec/loop]
-                                                    Smaller equals faster loops, but more comp expensive. If you have high publish_hz [200+], then you 
-                                                    can use this to slow down the loops to get smoother motion.
-        
-        loop_repeats = [1, 100] (integer) -> number of times to repeat the loop. Use 1 for one loop.
-
-        rollpitchyaw_array = [bool] -> True enables the sin_roll, sin_pitch, sin_yaw respectively. False disables the sin_roll, sin_pitch, sin_yaw respectively.
-
-        amplitude_array = [-0.7, 0.7] (radians) -> Larger value equals bigger angle. Negative is reversed. Recommended 0.6 for full angle.
-                                                CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
-        
-        offset_array = [-0.7, 0.7] (radians) -> Offsets the oscillation. Combination of offset and amplitude cannot exceed 0.7.
-                                                CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
-
-        period_array = [1./3, 10] (cycles) -> quantity equals period of oscillation. Recommended 1 for one oscillation. 2 for half oscillation.
-                                            Use 0.5 to get double the oscillations. Use 0.333 to get triple the oscillations. Use 0 to get infinite oscillations? (j.k. dont do that)
-                                            Value less than 0.3333 will trigger an override of publish_hz so you dont explode robot.
-        
-        phase_array = [-2pi, 2pi] (radians) -> Use math.pi // quantity equals phase shift of oscillation. Recommended 0 for no phase shift. math.pi for half phase shift.              
-
-        dev_check = [True, False] -> If True, will check if all values are within range. If False, will skip all checks.
-        
-        printer = [True, False] -> If True, will print out the values of the control loop. If False, will not print out the values of the control loop.
-
-        Note:   If you want a loop_rate of 1 as [1sec/loop] -> this is useful for making robot move to a given time signature..
-                The following equation is used to calculate loop_rate: 
-                
-                loop_rate = sleep_rate * publish_hz
-                sleep_rate = 1 / publish_hz
-
-                This loop_rate will keep to 1 so long as sleep_override is not used.
-                You can increase publish_hz and override the sleep_rate to get smoother motion while breaking loop rate.  
-        '''
-
-        # Calculate sleep_rate while taking into account bpm_override if it exists
-
-        self.ctrl_function = ctrl_function
-        self.publish_hz = publish_hz
-        self.sleep_override = sleep_override
-        self.loop_repeats = loop_repeats
-        self.rollpitchyaw_array = rollpitchyaw_array
-        self.amplitude_array = amplitude_array
-        self.offset_array = offset_array
-        self.period_array = period_array
-        self.phase_array = phase_array
-        self.dev_check = dev_check
-        self.printer = printer
-        self.timestep = None
-
-
-        self.change_bpm(bpm)
-
-        # Override sleep_rate if sleep_override is set
-        if self.sleep_override:
-            self.override_sleep_rate()
-
-        # Check if all values are within range // skip ONLY if you are very confident in your code >:) 
-        if self.dev_check:
-            self.check_control_values()
-
-        if self.dev_check or self.printer:
-            self.status_printer()
-
-        if self.dev_check:
-            print("Check set values and hit 'enter' to execute. 'ctrl + c' to abort.")
-            input()
-
-        if self.printer:
-            a = datetime.datetime.now()
-
-        start = time.time()
-
-        i = 0
-        for self.timestep in range(0, self.publish_hz*self.loop_repeats):
-            i += 1
-            
-            # Set highCmd values 
-            self.hcmd.mode = MotorModeHigh.FORCE_STAND   
-            self.hcmd.euler = np.multiply(np.array([
-                self.amplitude_array[0] * self.ctrl_function(((math.pi)*2 / self.period_array[0]) * ((self.timestep / self.publish_hz) + self.phase_array[0])) + self.offset_array[0],
-                self.amplitude_array[1] * self.ctrl_function(((math.pi)*2 / self.period_array[1]) * ((self.timestep / self.publish_hz) + self.phase_array[1])) + self.offset_array[1],
-                self.amplitude_array[2] * self.ctrl_function(((math.pi)*2 / self.period_array[2]) * ((self.timestep / self.publish_hz) + self.phase_array[2])) + self.offset_array[2]]),
-                self.rollpitchyaw_array)
-            
-            if self.timestep % 10 == 0 and self.printer:                        # Print every 10 cycles
-                if self.timestep % self.publish_hz == 0 and self.printer:       # Print once per loop to check loop rate (should be 1.0 secs)
-                    b = datetime.datetime.now()     
-                    c = b - a
-                    a = datetime.datetime.now()
-                    print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler} \t LoopRate: {c.total_seconds()} secs\n')
-                    continue
-                print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler}\n')  # Comment out if you dont want to see every timestep
-
-            cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
-            self.conn.send(cmd_bytes)                    # Send the command
-
-            remaining_delay = max(start + (i * self.sleep_rate) - time.time(), 0)
-            # print("remaining delay: %s" % remaining_delay) # Uncomment to see remaining delay
-
-            time.sleep(remaining_delay)        # Sleep for the remaining delay
-
-        print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
-        return
-    
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -458,7 +355,8 @@ class MotorControl:
                                                     Smaller equals faster loops, but more comp expensive. If you have high publish_hz [200+], then you 
                                                     can use this to slow down the loops to get smoother motion.
         
-        loop_repeats = [1, 100] (integer) -> number of times to repeat the loop. Use 1 for one loop.
+        loop_repeats = [1, 128] (integer) -> Number of times to repeat the loop. Use 1 for one loop. 
+                                             Recommended to choose numbers that are 2^n.
 
         rollpitchyaw_array = [bool] -> True enables the sin_roll, sin_pitch, sin_yaw respectively. False disables the sin_roll, sin_pitch, sin_yaw respectively.
 
@@ -468,9 +366,9 @@ class MotorControl:
         offset_array = [-0.7, 0.7] (radians) -> Offsets the oscillation. Combination of offset and amplitude cannot exceed 0.7.
                                                 CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
 
-        period_array = [1./3, 10] (cycles) -> quantity equals period of oscillation. Recommended 1 for one oscillation. 2 for half oscillation.
-                                            Use 0.5 to get double the oscillations. Use 0.333 to get triple the oscillations. Use 0 to get infinite oscillations? (j.k. dont do that)
-                                            Value less than 0.3333 will trigger an override of publish_hz so you dont explode robot.
+        period_array = [0.5, 16] (cycles) -> quantity equals period of oscillation. Recommended 1 for one oscillation. 2 for half oscillation.
+                                             Use 0.5 to get double the oscillations. Use 0 to get infinite oscillations? (j.k. dont do that)
+                                             Value of than 0.5 may trigger an override of publish_hz so you dont explode robot.
         
         phase_array = [-2pi, 2pi] (radians) -> Use math.pi // quantity equals phase shift of oscillation. Recommended 0 for no phase shift. math.pi for half phase shift.              
 
@@ -490,6 +388,7 @@ class MotorControl:
 
         # Calculate sleep_rate while taking into account bpm_override if it exists
 
+        self.mode = mode
         self.ctrl_function = ctrl_function
         self.publish_hz = publish_hz
         self.sleep_override = sleep_override
@@ -542,13 +441,13 @@ class MotorControl:
                 a = datetime.datetime.now()
                 print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler} \t LoopRate: {c.total_seconds()} secs\n')
                 
-            elif self.timestep % 10 == 0 and self.printer:                    # Print every 10 timesteps
+            elif self.timestep % 1 == 0 and self.printer:                    # Print every 1 timesteps
                 print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler}\n')  # Comment out if you dont want to see every timestep
 
             cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
             self.conn.send(cmd_bytes)                    # Send the command
 
-            if mode == 'dance':
+            if self.mode == 'dance':
                 # After every loop, perform the reverse
                 if self.timestep % self.publish_hz == 0 and self.timestep != 0:
                     print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
@@ -579,8 +478,11 @@ class MotorControl:
 # Modes:
 'default'
 'dance'
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
 
 
 ### ToDo:
