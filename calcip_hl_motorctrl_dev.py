@@ -150,38 +150,35 @@ class MotorControl:
     def calculate_loop_rate(self):
         # Calculate loop_rate (should be 1 if sleep_override is not used)
         self.loop_rate = self.sleep_rate * self.publish_hz
-        print(f"::: New loop_rate: {self.loop_rate}\n")
+        print(f"::: Resulting loop_rate: \t{self.loop_rate:0.4f} (Approx. {self.loop_rate:0.3f} second(s) per loop)\n")
+
         return
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def rand_euler(self):
-        ''' Randomize euler_array and amplitude_array ''' # could also use randint(-1,1) to et -1, 0, 1 and remove euler_array
+        ''' Randomize euler_array and amplitude_array ''' # could also use randint(-1,1) to get -1, 0, 1 and remove euler_array
         self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
         while self.euler_array.sum() <= 1:  # Maybe: Set this back to zero if you find this creates a lag
             self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
         
         self.amplitude_array = np.array([random.uniform(0.3, 0.5) * random.choice([-1, 1]), 
-                                         random.uniform(0.3, 0.5) * random.choice([-1, 1]),
-                                         random.uniform(0.3, 0.4) * random.choice([-1, 1])])
+                                         random.uniform(0.2, 0.5) * random.choice([-1, 1]),
+                                         random.uniform(0.2, 0.3) * random.choice([-1, 1])])
         
-        self.period_array=np.array([random.choice([1, 2]), 
-                                    random.choice([1, 2]), 
-                                    random.choice([1, 2])])
-        
-        # Check if bpm is greater than 45 and override period <1 to value: 1
-        if self.bpm > 45:
-            for index_012 in range(0,3):
-                if self.period_array[index_012] < 1:
-                    self.period_array[2] = 1
+        self.period_array=np.array([random.choice([1., 2., 4.]), 
+                                    random.choice([1., 2., 4.]), 
+                                    random.choice([1., 2., 4.])])
         
         if self.ctrl_function == math.sin:
-            self.phase_array=np.array([0, 0, 0]) 
+            self.phase_array=np.array([0., 0., 0.]) 
 
-        # ToDo: Remove later - Adding this as a test to see if it fixes cos() phase
+
+        # ToDo: Test to see if it fixes cos() phase
         elif self.ctrl_function == math.cos:
-            self.phase_array=np.array([math.pi/2, math.pi/2, math.pi/2])
+            for index_012 in range(0,3):
+                self.phase_array[index_012] = self.period_array[index_012] / -4.0
 
         print(f'>> New Traject @ timestep: {self.timestep}\n')
 
@@ -193,7 +190,7 @@ class MotorControl:
     def rand_ctrl_function(self):
         # Sort through this to only take continuous functions
         self.ctrl_function = random.choice(self.oscillating_functions)        
-        print(f'>> {self.ctrl_function.__name__} Control Funct  @ timestep: {self.timestep}\n')
+        print(f'>> {self.ctrl_function.__name__} Control Funct @ timestep: {self.timestep}\n')
 
         return
         
@@ -207,7 +204,7 @@ class MotorControl:
         elif self.ctrl_function == math.cos:
             self.ctrl_function = math.sin
 
-        print(f'>> {self.ctrl_function.__name__} Control Funct  @ timestep: {self.timestep}\n')
+        print(f'>> {self.ctrl_function.__name__} Control Funct @ timestep: {self.timestep}\n')
 
         return
 
@@ -217,27 +214,27 @@ class MotorControl:
     def change_bpm(self, new_bpm):
 
         # Check if new bpm is valid 
-        if new_bpm <= 0:
+        if new_bpm <= 0.0:
             print(f"WARNING: Attempt to change BPM to negative value {new_bpm} is not allowed")
             if self.bpm:
                 print(f"::: BPM remains at: {self.bpm}\n")
                 return
             
             elif self.bpm == None:
-                self.bpm = 60
+                self.bpm = 60.
 
         else:
             self.bpm = new_bpm
         
-        while self.bpm > 65:  # Sets max BPM range [0, 65]. Robot cant move faster than 60/65=0.923 sec/loop (1.08 loop/sec)
-            self.bpm /= 2 
+        while self.bpm > 60.:  # Sets max BPM range [0, 60]. Robot cant move faster than 60/60=1.0 sec/loop (1.00 loop/sec)
+            self.bpm /= 2. 
 
         bpm_to_bps_factored = (60. / self.bpm)              
-        self.sleep_rate = (1 / int(self.publish_hz)) * bpm_to_bps_factored 
+        self.sleep_rate = (1. / int(self.publish_hz)) * bpm_to_bps_factored 
         
         if self.printer:
             print(f">> BPM set to: {self.bpm}")
-            print(f"::: Resulting sleep rate: {self.sleep_rate }\n")
+            print(f"::: Resulting sleep rate: \t{self.sleep_rate:0.4f} (Sleeps {self.sleep_rate:0.4f} secs per msg)")
 
         self.calculate_loop_rate()
 
@@ -253,8 +250,8 @@ class MotorControl:
             print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
             print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
             print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
-            print(f'RESULTING LOOP RATE: {self.loop_rate:0.3f} \t(Approx. {self.loop_rate:0.3f} second(s) per loop)\n')
-            print(f'::: Euler: \t{self.euler_array}')
+            print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} second(s) per loop)\n')
+            print(f'::: Euler Active: \t{self.euler_array}')
             print(f'::: Amplitude: \t\t{self.amplitude_array}')
             print(f'::: Period: \t\t{self.period_array}')
             print(f'::: Phase Shift: \t{self.phase_array}')
@@ -288,6 +285,11 @@ class MotorControl:
         if self.loop_repeats > 128 or self.loop_repeats < 1:
             raise ValueError("loop_repeats must be within range [1, 128]\n")
 
+        # Check if loop_repeats is a multiple of max period
+        if self.loop_repeats < max(self.period_array) or self.loop_repeats % max(self.period_array) != 0:
+            print(f"WARNING: loop_repeats {self.loop_repeats} is not a multiple of max period {max(self.period_array)}")
+            print(f"::: Robot may not complete full oscillation\n")
+
         # Check if sleep_rate is valid
         if self.sleep_rate < 0.002:
             print(f"WARNING: low sleep_rate of {self.sleep_rate} is not recommended. Might experience control lag") 
@@ -302,21 +304,49 @@ class MotorControl:
 
         # Check if amplitude + offset is valid
         for index_012 in range(0,3):
-            if abs(self.amplitude_array[index_012]) + abs(self.offset_array[index_012]) > 0.7:
-                raise ValueError("sum of (amplitude + offset) must be within range [0, 0.7] for each euler angle\n")
+            if abs(self.amplitude_array[index_012]) + abs(self.offset_array[index_012]) > 0.55:
+                raise ValueError("sum of (amplitude + offset) must be within range [0, 0.55] for each euler angle\n")
 
         # Check if period is valid
         for period in self.period_array:
-            if period > 16 or period < 1:
-                raise ValueError("period values must be within range [1, 16] for each euler angle\n")
+            if isinstance(period, float) == False or period > 16. or period < 1.:
+                raise ValueError("period values must be float within range [1., 16.] for each euler angle\n")
 
-        # Check if phase is valid
+        # Check if phase is within range [-2pi, 2pi]
+        phase_counter = 0
         for phase in self.phase_array:
-            if phase > 2*math.pi or phase < -2*math.pi:
-                print(f'WARNING: phase values should be specified within range [-2pi, 2pi] for each euler angle\n')
+            if phase >= 2.:
+                while phase >= 2.:
+                    phase -= 2.    # ToDo: Should this be -2 or -4
+                print(f'WARNING: phase values should be specified within range [-2., 2.]')
+                print(f'::: Overriding phase[{phase_counter}] of {self.phase_array[phase_counter]} to: {phase}\n')
+                self.phase_array[phase_counter] = phase
+                phase_counter += 1
+
+            elif phase <= -2.:
+                while phase <= -2.:
+                    phase += 2.    # ToDo: Should this be +2 or +4
+                print(f'WARNING: phase values should be specified within range [-2., 2.]')
+                print(f'::: Overriding phase[{phase_counter}] of {self.phase_array[phase_counter]} to: {phase}\n')
+                self.phase_array[phase_counter] = phase
+                phase_counter += 1
+
+        # Check if phase is valid for sin() function
+        if self.ctrl_function == math.sin:
+            for index_012 in range(0,3):
+                if self.phase_array[index_012] != 0.:
+                    print(f'WARNING: phase value at idx[{index_012}] should be set to float [0.0] for sin() function')
+                    print(f'::: Robot may not start loops from centered position causing jerky motion\n')   
+
+        # Check if phase is valid for cos() function
+        if self.ctrl_function == math.cos:
+            for index_012 in range(0,3):
+                if self.phase_array[index_012] != self.period_array[index_012] / -4.0:
+                    print(f'WARNING: phase value at idx[{index_012}] should be set to float [period/-4.0] for cos() function')   
+                    print(f'::: Robot may not start loops from centered position causing jerky motion\n')   
 
         # Check if resulting loop_rate is lower than 1 and warn user if it is 
-        if self.loop_rate < 1:
+        if self.loop_rate < 1.0:
             print(f'WARNING: Loop rate of {self.loop_rate} is less than 1 [1sec/loop]')
             print('::: Robot may move quickly and could damage itself\n')
 
@@ -328,49 +358,52 @@ class MotorControl:
                                 sleep_override=None, loop_repeats=8, 
                                 euler_array=np.array([1, 1, 1]),
                                 amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0, 0, 0]), 
-                                period_array=np.array([1, 1, 1]), 
-                                phase_array=np.array([0, 0, 0]), 
+                                offset_array=np.array([0.0, 0.0, 0.0]), 
+                                period_array=np.array([1.0, 1.0, 1.0]), 
+                                phase_array=np.array([0.0, 0.0, 0.0]), 
                                 dev_check=True,
                                 printer=True):
         '''ARG RANGES:
         recall y = Asin(B(x + C)) + D   ///   A = amplitude, 2pi/B = period, C = phase shift, D = offset
 
-        mode = ['default', 'dance', '...'] -> Makes robot do variations of the default control loop.
+        mode = ['default', 'dance', '...'] ->   Makes robot do variations of the default control loop.
 
-        ctrl_function = [math.sin, math.cos ... ] -> Any continuous function from math library.
+        ctrl_function = [math.sin, math.cos, ... ] -> Any continuous function from math library.
 
-        publish_hz = [50, 1000] (Hz - integer) -> Number of msgs being sent per loop. Smoother motion at higher hz but more comp expensive. 
+        publish_hz = [50, 1000] (Hz - int) ->   Number of msgs being sent per loop. Smoother motion at higher hz but more comp expensive. 
                                                 If robot acting undesirably, try decreasing this value. Recommended 100+ 
         
-        set_bpm = [1, 60] (bpm - integer) -> Sets the bpm at which the loops of the robot execute. If nothing is set, the robot will move
-                                             at a rate of one control loop per second -> 1 loop/sec = 1 beat per sec = 60BPM. 
-                                             Any specified BPM greater than 100 will be halved until within range [0-100]. Recommended value: 50-100                                             
+        set_bpm = [1, 60] (bpm - int) ->    Sets the bpm at which the loops of the robot execute. If nothing is set, the robot will move
+                                            at a rate of one control loop per second -> 1 loop/sec = 1 beat per sec = 60BPM. 
+                                            Any specified BPM greater than 100 will be halved until within range [0-100]. Recommended value: 50-100                                             
 
-        sleep_override = [0.001, 0.1] (integer) ->  Sets the number of seconds that each loop will sleep for. Setting this breaks the loop_rate=1 [1sec/loop]
-                                                    Smaller equals faster loops, but more comp expensive. If you have high publish_hz [200+], then you 
-                                                    can use this to slow down the loops to get smoother motion.
+        sleep_override = [0.001, 0.1] (int) ->  Sets the number of seconds that each loop will sleep for. Setting this breaks the loop_rate=1 [1sec/loop]
+                                                Smaller equals faster loops, but more comp expensive. If you have high publish_hz [200+], then you 
+                                                can use this to slow down the loops to get smoother motion.
         
-        loop_repeats = [1, 128] (integer) -> Number of times to repeat the loop. Use 1 for one loop. 
-                                             Recommended to choose numbers that are 2^n.
+        loop_repeats = [1, 128] (int)-> Number of times to repeat the loop. Use 1 for one loop. 
+                                        Recommended to choose numbers that are 2^n.
 
-        euler_array = [bool] -> True enables the sin_roll, sin_pitch, sin_yaw respectively. False disables the sin_roll, sin_pitch, sin_yaw respectively.
+        euler_array = [0, 1] -> 1/True enables the sin_roll, sin_pitch, sin_yaw respectively. 0/False disables the sin_roll, sin_pitch, sin_yaw respectively.
 
-        amplitude_array = [-0.7, 0.7] (radians) -> Larger value equals bigger angle. Negative is reversed. Recommended 0.6 for full angle.
-                                                CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
+        amplitude_array = [-0.55, 0.55] (radians - float) ->  Larger value equals bigger angle. Negative is reversed. Recommended 0.6 for full angle.
+                                                            CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
         
-        offset_array = [-0.7, 0.7] (radians) -> Offsets the oscillation. Combination of offset and amplitude cannot exceed 0.7.
-                                                CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
+        offset_array = [-0.55, 0.55] (radians - float) -> Offsets the oscillation. Combination of offset and amplitude cannot exceed 0.7.
+                                                        CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
 
-        period_array = [1, 16] (cycles) -> quantity equals period of oscillation. Recommended 1 for one oscillation. 
-                                           Use 2 to get an oscillation which takes twice as long. Use 0 to get infinite oscillations? (j.k. dont do that)
+        period_array = [1, 16] (cycles - float) ->  quantity equals period of oscillation. Recommended 1 for one oscillation. 
+                                                    Use 2 to get an oscillation which takes twice as long. Use 0 to get infinite oscillations? (j.k. dont do that)
         
-        phase_array = [-2pi, 2pi] (radians) -> Use math.pi // quantity equals phase shift of oscillation. Recommended 0 for no phase shift. math.pi for half phase shift.              
+        phase_array = [-2, 2] (radians - float) ->  Quantity equals phase shift of oscillation. Recommended 0 for no phase shift. 1 for half phase shift.
+                                                    If you enter 2, it will be converted to 0. If you enter -2, it will be converted to 0.
+                                                    If you enter 3, it will be converted to 1. If you enter -3, it will be converted to -1. 
 
         dev_check = [True, None] -> If True, will check if all values are within range. If False, will skip all checks.
         
-        printer = [True, None] -> If True, will print out the values of the control loop. If False, will not print out the values of the control loop.
+        printer = ['All', 'AnglesOnly', None] -> If True, will print out the values of the control loop. If False, will not print out the values of the control loop.
 
+        
         Note:   If you want a loop_rate of 1 as [1sec/loop] -> this is useful for making robot move to a given time signature..
                 The following equation is used to calculate loop_rate: 
                 
@@ -445,12 +478,8 @@ class MotorControl:
                 a = datetime.datetime.now()
                 print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler} \t LoopRate: {c.total_seconds()} secs\n')
                 
-            elif self.timestep % 100 == 0 and self.printer:       # Print every timestep
+            elif self.timestep % 10 == 0 and self.printer:       # Print every timestep
                 print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler}\n')  # Comment out if you dont want to see every timestep
-
-            # ToDo : Remove this after testing
-            elif self.timestep == 1 or self.timestep == 1599 and self.printer:
-                print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler}\n')
 
             cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
             self.conn.send(cmd_bytes)                    # Send the command
