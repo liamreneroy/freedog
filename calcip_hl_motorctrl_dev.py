@@ -11,7 +11,7 @@ import datetime
 
 import math
 import random
-random.seed(55) # random.seed(time.time())  eventually use this
+random.seed(45) # random.seed(time.time())  eventually use this
 
 
 import numpy as np
@@ -22,7 +22,7 @@ np.set_printoptions(formatter={'float': lambda x: '%7.4f' % (x)})
 
 class MotorControl:
 
-    def __init__(self):
+    def __init__(self, printer=None):
         '''
         You can use one of the 3 Presets WIFI_DEFAULTS, LOW_CMD_DEFAULTS or HIGH_CMD_DEFAULTS.
         IF NONE OF THEM ARE WORKING YOU CAN DEFINE A CUSTOM ONE LIKE THIS:
@@ -44,14 +44,24 @@ class MotorControl:
 
         self.mode_list = ['default', 'dance']
 
+        self.print_options = ['All', 'AnglesOnly', None]
+        self.printer = printer
+
+        # Check if printer is valid
+        if self.printer not in self.print_options:
+            self.printer = None
+            print(f"WARNING: printer must be one of the following: {self.print_options}. Printer set to: {self.printer}\n")
+
         print(">> MotorControl Initialized\n")        
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def parse_data(self, print_out=False):
+    def parse_data(self):
         ''' Parse data from the robot and print out the first packet'''
-        print(">> Parsing Data\n")        
+        
+        if self.printer:
+            print(">> Parsing Data\n")        
 
         data = self.conn.getData()
 
@@ -59,7 +69,7 @@ class MotorControl:
         for paket in data:
             self.hstate.parseData(paket)
 
-            if print_out == True and paket_count == 0:
+            if self.printer == 'All' and paket_count == 0:
                 print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
                 print(f'SN [{byte_print(self.hstate.SN)}]:\t{decode_sn(self.hstate.SN)}')
                 print(f'Ver [{byte_print(self.hstate.version)}]:\t{decode_version(self.hstate.version)}')
@@ -150,8 +160,9 @@ class MotorControl:
     def calculate_loop_rate(self):
         # Calculate loop_rate (should be 1 if sleep_override is not used)
         self.loop_rate = self.sleep_rate * self.publish_hz
-        print(f"::: Resulting loop_rate: \t{self.loop_rate:0.4f} (Approx. {self.loop_rate:0.3f} second(s) per loop)\n")
-
+        if self.printer == 'All':
+            print(f"::: Resulting loop_rate: \t{self.loop_rate:0.4f} (Approx. {self.loop_rate:0.3f} second(s) per loop)\n")
+        
         return
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -159,29 +170,31 @@ class MotorControl:
 
     def rand_euler(self):
         ''' Randomize euler_array and amplitude_array ''' # could also use randint(-1,1) to get -1, 0, 1 and remove euler_array
-        self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
-        while self.euler_array.sum() <= 1:  # Maybe: Set this back to zero if you find this creates a lag
-            self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
         
-        self.amplitude_array = np.array([random.uniform(0.3, 0.5) * random.choice([-1, 1]), 
-                                         random.uniform(0.2, 0.5) * random.choice([-1, 1]),
-                                         random.uniform(0.2, 0.3) * random.choice([-1, 1])])
+        self.euler_array = np.array([1, 1, 1])
+
+        # self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
+        # while self.euler_array.sum() <= 1:  
+        #     self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
         
-        self.period_array=np.array([random.choice([1., 2., 4.]), 
+        self.amplitude_array = np.array([random.uniform(0.3, 0.55) * random.choice([-1, 1]), 
+                                         random.uniform(0.2, 0.55) * random.choice([-1, 1]),
+                                         random.uniform(0.2, 0.4) * random.choice([-1, 1])])
+        
+        self.period_array=np.array([random.choice([1., 2., 2.]), #swap for 4
                                     random.choice([1., 2., 4.]), 
                                     random.choice([1., 2., 4.])])
         
         if self.ctrl_function == math.sin:
             self.phase_array=np.array([0., 0., 0.]) 
 
-
-        # ToDo: Test to see if it fixes cos() phase
         elif self.ctrl_function == math.cos:
             for index_012 in range(0,3):
                 self.phase_array[index_012] = self.period_array[index_012] / -4.0
 
-        print(f'>> New Traject @ timestep: {self.timestep}\n')
-
+        if self.printer:
+            print(f'>> New Traject @ timestep: {self.timestep}\n')
+        
         return
     
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -190,8 +203,9 @@ class MotorControl:
     def rand_ctrl_function(self):
         # Sort through this to only take continuous functions
         self.ctrl_function = random.choice(self.oscillating_functions)        
-        print(f'>> {self.ctrl_function.__name__} Control Funct @ timestep: {self.timestep}\n')
-
+        if self.printer:
+            print(f'>> Control Funct {self.ctrl_function.__name__} @ timestep: {self.timestep}\n')
+        
         return
         
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -204,8 +218,9 @@ class MotorControl:
         elif self.ctrl_function == math.cos:
             self.ctrl_function = math.sin
 
-        print(f'>> {self.ctrl_function.__name__} Control Funct @ timestep: {self.timestep}\n')
-
+        if self.printer:
+            print(f'>> Control Funct {self.ctrl_function.__name__} @ timestep: {self.timestep}\n')
+        
         return
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -232,7 +247,7 @@ class MotorControl:
         bpm_to_bps_factored = (60. / self.bpm)              
         self.sleep_rate = (1. / int(self.publish_hz)) * bpm_to_bps_factored 
         
-        if self.printer:
+        if self.printer == 'All':
             print(f">> BPM set to: {self.bpm}")
             print(f"::: Resulting sleep rate: \t{self.sleep_rate:0.4f} (Sleeps {self.sleep_rate:0.4f} secs per msg)")
 
@@ -244,20 +259,22 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def status_printer(self):
-            print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
-            print(f'>> Executing: euler_control in [{self.mode}] mode @ timestep: {self.timestep}\n')
-            print(f'::: Control Function: {self.ctrl_function.__name__} \t(funct which dictates motion trajectory)')
-            print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
-            print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
-            print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
-            print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} second(s) per loop)\n')
-            print(f'::: Euler Active: \t{self.euler_array}')
-            print(f'::: Amplitude: \t\t{self.amplitude_array}')
-            print(f'::: Period: \t\t{self.period_array}')
-            print(f'::: Phase Shift: \t{self.phase_array}')
-            print(f'::: Offset: \t\t{self.offset_array}')
-            print(f'::: Repeat Loop: \t{self.loop_repeats} times\n')
-            print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
+        print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
+        print(f'>> Executing: euler_control in [{self.mode}] mode @ timestep: {self.timestep}\n')
+        print(f'::: Control Function: {self.ctrl_function.__name__} \t(funct which dictates motion trajectory)')
+        print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
+        print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
+        print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
+        print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} second(s) per loop)\n')
+        print(f'::: Euler Active: \t{self.euler_array}')
+        print(f'::: Amplitude: \t\t{self.amplitude_array}')
+        print(f'::: Period: \t\t{self.period_array}')
+        print(f'::: Phase Shift: \t{self.phase_array}')
+        print(f'::: Offset: \t\t{self.offset_array}')
+        print(f'::: Repeat Loop: \t{self.loop_repeats} times\n')
+        print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
+        
+        return
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,7 +284,12 @@ class MotorControl:
         # Check if mode is valid
         if self.mode not in self.mode_list:
             raise ValueError(f"mode must be one of the following: {self.mode_list}\n")
-        
+
+        # Check if printer is valid
+        if self.printer not in self.print_options:
+            self.printer = None
+            print(f"WARNING: printer must be one of the following: {self.print_options}. Printer set to: {self.printer}\n")
+
         # Check if ctrl_function is valid
         if self.ctrl_function not in self.oscillating_functions:
             raise ValueError(f"ctrl_function must be one of the following: {self.oscillating_functions}\n")
@@ -317,7 +339,7 @@ class MotorControl:
         for phase in self.phase_array:
             if phase >= 2.:
                 while phase >= 2.:
-                    phase -= 2.    # ToDo: Should this be -2 or -4
+                    phase -= 2.    
                 print(f'WARNING: phase values should be specified within range [-2., 2.]')
                 print(f'::: Overriding phase[{phase_counter}] of {self.phase_array[phase_counter]} to: {phase}\n')
                 self.phase_array[phase_counter] = phase
@@ -325,30 +347,39 @@ class MotorControl:
 
             elif phase <= -2.:
                 while phase <= -2.:
-                    phase += 2.    # ToDo: Should this be +2 or +4
+                    phase += 2.    
                 print(f'WARNING: phase values should be specified within range [-2., 2.]')
                 print(f'::: Overriding phase[{phase_counter}] of {self.phase_array[phase_counter]} to: {phase}\n')
                 self.phase_array[phase_counter] = phase
                 phase_counter += 1
 
         # Check if phase is valid for sin() function
-        if self.ctrl_function == math.sin:
+        if self.ctrl_function == math.sin and self.force==False:
             for index_012 in range(0,3):
                 if self.phase_array[index_012] != 0.:
                     print(f'WARNING: phase value at idx[{index_012}] should be set to float [0.0] for sin() function')
-                    print(f'::: Robot may not start loops from centered position causing jerky motion\n')   
+                    print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: 0.0')
+                    print(f"::: To force values, set 'force=True' \n")
+                    self.phase_array[index_012] = 0
+
 
         # Check if phase is valid for cos() function
         if self.ctrl_function == math.cos:
             for index_012 in range(0,3):
                 if self.phase_array[index_012] != self.period_array[index_012] / -4.0:
                     print(f'WARNING: phase value at idx[{index_012}] should be set to float [period/-4.0] for cos() function')   
-                    print(f'::: Robot may not start loops from centered position causing jerky motion\n')   
+                    print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: {self.period_array[index_012] / -4.0}')
+                    print(f"::: To force values, set 'force=True' \n")
+                    self.phase_array[index_012] = self.period_array[index_012] / -4.0
+
 
         # Check if resulting loop_rate is lower than 1 and warn user if it is 
         if self.loop_rate < 1.0:
             print(f'WARNING: Loop rate of {self.loop_rate} is less than 1 [1sec/loop]')
             print('::: Robot may move quickly and could damage itself\n')
+
+        return
+    
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -361,8 +392,9 @@ class MotorControl:
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([1.0, 1.0, 1.0]), 
                                 phase_array=np.array([0.0, 0.0, 0.0]), 
+                                force=False,
                                 dev_check=True,
-                                printer=True):
+                                printer='All'):
         '''ARG RANGES:
         recall y = Asin(B(x + C)) + D   ///   A = amplitude, 2pi/B = period, C = phase shift, D = offset
 
@@ -397,7 +429,10 @@ class MotorControl:
         
         phase_array = [-2, 2] (radians - float) ->  Quantity equals phase shift of oscillation. Recommended 0 for no phase shift. 1 for half phase shift.
                                                     If you enter 2, it will be converted to 0. If you enter -2, it will be converted to 0.
-                                                    If you enter 3, it will be converted to 1. If you enter -3, it will be converted to -1. 
+                                                    For sin(), phase should be 0. For cos(), phase should be -1/4 of period. 
+                                                    These values will auto-correct unless force=True. 
+
+        force = [True, False] -> If True, will force the phase values to be used. If False, will auto-correct phase values to be used.
 
         dev_check = [True, None] -> If True, will check if all values are within range. If False, will skip all checks.
         
@@ -426,6 +461,7 @@ class MotorControl:
         self.offset_array = offset_array
         self.period_array = period_array
         self.phase_array = phase_array
+        self.force = force
         self.dev_check = dev_check
         self.printer = printer
         self.timestep = None
@@ -441,7 +477,7 @@ class MotorControl:
         if self.dev_check:
             self.check_control_values()
 
-        if self.dev_check or self.printer:
+        if self.dev_check or self.printer == 'All':
             self.status_printer()
 
         if self.dev_check:
@@ -487,49 +523,33 @@ class MotorControl:
             if self.mode == 'dance':
                 # After every loop, perform the reverse
                 if self.timestep % (self.publish_hz * 2) == 0 and self.timestep != 0:
-                    print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
+                    if self.printer:
+                        print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
                     self.amplitude_array = self.amplitude_array * -1
 
                     # After every 4th loop, perform a new random loop configuration
                     if self.timestep % (self.publish_hz * 4) == 0 and self.timestep != 0:
-                        self.swap_ctrl_function()       # Needs to go before random_euler
                         self.rand_euler()               # New euler angles and params based on ctrl_funct selected
                         self.check_control_values()     # Checks values for safety
-                        self.status_printer()           # Prints out values
+                        if self.printer == 'All':
+                            self.status_printer()           # Prints out values
 
             remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # replace self.timestep with i where I starts at 1
             # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
 
             time.sleep(remaining_delay)        # Sleep for the remaining delay
 
-        print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
+        
+        print(f'>> End of: euler_control in [{self.mode}] mode\n')        
+        print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
+
         return
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Modes:
-'default'
-'dance'
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-
-
-
-### ToDo:
-# Check: Maybe and ToDo 
-# for sin() add phase -math.pi/4 when period is 0.5 
-
-# Finish rand function
-# Try integrating random function into sin_rpy main loop to change motion randomly
-# Try integrating change_bpm function into sin_rpy main loop to see if you can change the bpm 
-# See if you can assign sin() or cos() to as an object.attribute so you can call either one
+### ToDo List:
 # Get the robot to dance to a song and film it
 
 # Add an absolute value shifter [-1, 0, 1] but this might make the motion choppy at point of shift
@@ -539,4 +559,6 @@ class MotorControl:
 # Get the robot to walk in a line forward backwards 
 # Get the robot to walk in a circle 
 # Start doing motion such as walking in circle or line or spinning on the spot or jumping 
+
+# Check: Maybe and ToDo 
 ###

@@ -15,10 +15,10 @@ import numpy as np
 
 def main():
     # Initialize connection and highCmd, highState objects
-    motor_control_obj = chcf.MotorControl()
+    motor_control_obj = chcf.MotorControl(printer='All')
 
     # Parse data
-    motor_control_obj.parse_data(print_out=True)
+    motor_control_obj.parse_data()
 
     # Recover Control
     motor_control_obj.recover_control()
@@ -31,74 +31,23 @@ def main():
     terminate = False
     while terminate == False:
 
-        # Parse data    
-        motor_control_obj.parse_data(print_out=True)
+        # Parse data
+        motor_control_obj.printer = None
+        motor_control_obj.parse_data()
 
         # Control commands here (see calcip_hl_control_functs.py)
-        motor_control_obj.euler_control(mode='default', ctrl_function=math.sin, 
-                                publish_hz=200, bpm=45, 
-                                sleep_override=None, loop_repeats=8, 
-                                euler_array=np.array([1, 1, 1]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0.0, 0.0, 0.0]), 
-                                period_array=np.array([1.0, 2.0, 4.0]), 
-                                phase_array=np.array([0.0, 0.0, 0.0]), 
-                                dev_check=True,
-                                printer=True)
-        time.sleep(2)
-
-
-        motor_control_obj.euler_control(mode='dance', ctrl_function=math.cos, 
-                                publish_hz=200, bpm=45, 
-                                sleep_override=None, loop_repeats=16, 
-                                euler_array=np.array([1, 1, 1]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0.0, 0.0, 0.0]), 
-                                period_array=np.array([1.0, 2.0, 1.0]), 
-                                phase_array=np.array([-0.25, -0.5, -0.25]), 
-                                dev_check=True,
-                                printer=True)
-        time.sleep(2)
-
-
-
-        motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
-                                publish_hz=200, bpm=45, 
-                                sleep_override=None, loop_repeats=16, 
-                                euler_array=np.array([1, 1, 1]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0.0, 0.0, 0.0]), 
-                                period_array=np.array([1.0, 2.0, 1.0]), 
-                                phase_array=np.array([0.0, 0.0, 0.0]), 
-                                dev_check=True,
-                                printer=True)
-        time.sleep(2)
-
 
         motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
                                 publish_hz=200, bpm=60, 
-                                sleep_override=None, loop_repeats=16, 
+                                sleep_override=None, loop_repeats=32, 
                                 euler_array=np.array([1, 1, 1]),
                                 amplitude_array=np.array([0.5, 0.5, 0.4]),
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([1.0, 2.0, 1.0]), 
-                                phase_array=np.array([0.0, 0.0, 0.0]), 
+                                phase_array=np.array([0, 0, 0]), 
+                                force=False,
                                 dev_check=True,
-                                printer=True)
-        time.sleep(2)
-
-
-
-        motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
-                                publish_hz=200, bpm=65, 
-                                sleep_override=None, loop_repeats=16, 
-                                euler_array=np.array([1, 1, 1]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                offset_array=np.array([0.0, 0.0, 0.0]), 
-                                period_array=np.array([1.0, 2.0, 1.0]), 
-                                phase_array=np.array([0.0, 0.0, 0.0]), 
-                                dev_check=True,
-                                printer=True)
+                                printer='AnglesOnly')
         time.sleep(2)
 
         # Terminate control
