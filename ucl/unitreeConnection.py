@@ -14,14 +14,6 @@ addr_wifi = '192.168.12.1'
 addr_low = '192.168.123.10'
 addr_high = '192.168.123.161'
 
-###
-#   You can use one of the 3 Presets WIFI_DEFAULTS, LOW_CMD_DEFAULTS or HIGH_CMD_DEFAULTS.
-#   IF NONE OF THEM ARE WORKING YOU CAN DEFINE A CUSTOM ONE LIKE THIS:
-#
-#   MY_CONNECTION_SETTINGS = (listenPort, addr_wifi, sendPort_high, local_ip_wifi)
-#   conn = unitreeConnection(MY_CONNECTION_SETTINGS)
-###
-
 
 LOW_WIRED_DEFAULTS = (listenPort, addr_low, sendPort_low, local_ip_eth)
 LOW_WIFI_DEFAULTS = (listenPort, addr_low, sendPort_low, local_ip_wifi)

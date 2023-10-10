@@ -19,10 +19,11 @@ class MotorModeHigh(Enum):
 class GaitType(Enum):
     IDLE = 0
     TROT = 1
-    CLIMB_STAIR = 2
-    TROT_OBSTACLE = 3
+    TROT_RUNNING = 2
+    CLIMB_STAIR = 3
+    TROT_OBSTACLE = 4
 
-class SpeedLevel(Enum):  # edited to make floats (cant - create extra)
+class SpeedLevel(Enum):
     LOW_SPEED = 0
     MEDIUM_SPEED = 1
     HIGH_SPEED = 2

@@ -11,7 +11,7 @@ import datetime
 
 import math
 import random
-random.seed(45) # random.seed(time.time())  eventually use this
+random.seed(111) # random.seed(time.time())  eventually use this
 
 
 import numpy as np
@@ -173,17 +173,26 @@ class MotorControl:
         
         self.euler_array = np.array([1, 1, 1])
 
+        ## If you want to only activate 2/3 Euler angles at random, you can:
         # self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
         # while self.euler_array.sum() <= 1:  
         #     self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
+
+        self.amplitude_array = np.array([random.uniform(0.4, 0.55) * random.choice([-1, 1]), 
+                                         random.uniform(0.4, 0.55) * random.choice([-1, 1]),
+                                         random.uniform(0.3, 0.45) * random.choice([-1, 1])])
         
-        self.amplitude_array = np.array([random.uniform(0.3, 0.55) * random.choice([-1, 1]), 
-                                         random.uniform(0.2, 0.55) * random.choice([-1, 1]),
-                                         random.uniform(0.2, 0.4) * random.choice([-1, 1])])
-        
-        self.period_array=np.array([random.choice([1., 2., 2.]), #swap for 4
-                                    random.choice([1., 2., 4.]), 
-                                    random.choice([1., 2., 4.])])
+        period_scheme = random.randint(0, 2)
+
+        if period_scheme == 0:
+            period_list = np.array([1., 1., 4.])
+        elif period_scheme == 1:
+            period_list = np.array([1., 2., 4.])
+        elif period_scheme == 2:
+            period_list = np.array([1., 2., 2.]) # Maybe remove this one if its too chaotic 
+
+        random.shuffle(period_list)
+        self.period_array=np.array([period_list[0], period_list[1], period_list[2]])
         
         if self.ctrl_function == math.sin:
             self.phase_array=np.array([0., 0., 0.]) 
@@ -191,6 +200,9 @@ class MotorControl:
         elif self.ctrl_function == math.cos:
             for index_012 in range(0,3):
                 self.phase_array[index_012] = self.period_array[index_012] / -4.0
+
+        print(f">> New Scheme {period_scheme} of {self.period_array} - grep 0.0000")
+
 
         if self.printer:
             print(f'>> New Traject @ timestep: {self.timestep}\n')
@@ -331,8 +343,11 @@ class MotorControl:
 
         # Check if period is valid
         for period in self.period_array:
-            if isinstance(period, float) == False or period > 16. or period < 1.:
-                raise ValueError("period values must be float within range [1., 16.] for each euler angle\n")
+            if isinstance(period, float) == False or period > 4. or period < 1.:
+                print(f'WARNING: period values should be specified within range [1., 4.] for continuous motion')
+                if isinstance(period, float) == False or period > 16. or period < 1.:
+                    raise ValueError("period values must be float within range [1., 16.] for each euler angle\n")
+
 
         # Check if phase is within range [-2pi, 2pi]
         phase_counter = 0
@@ -521,18 +536,21 @@ class MotorControl:
             self.conn.send(cmd_bytes)                    # Send the command
 
             if self.mode == 'dance':
-                # After every loop, perform the reverse
+                # After every second loop, either change the euler angles or reverse the trajectory
                 if self.timestep % (self.publish_hz * 2) == 0 and self.timestep != 0:
-                    if self.printer:
-                        print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
-                    self.amplitude_array = self.amplitude_array * -1
+                    next_move = random.getrandbits(1)   # Randomly choose to change euler angles or reverse trajectory
 
-                    # After every 4th loop, perform a new random loop configuration
-                    if self.timestep % (self.publish_hz * 4) == 0 and self.timestep != 0:
+                    if next_move == 0 or (self.timestep % (self.publish_hz * 4) == 0 and self.timestep != 0):
                         self.rand_euler()               # New euler angles and params based on ctrl_funct selected
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'All':
-                            self.status_printer()           # Prints out values
+                            self.status_printer()       # Prints out values
+
+                    elif next_move == 1:
+                        if self.printer:
+                            print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
+                        self.amplitude_array = self.amplitude_array * -1
+
 
             remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # replace self.timestep with i where I starts at 1
             # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
@@ -551,6 +569,8 @@ class MotorControl:
 
 ### ToDo List:
 # Get the robot to dance to a song and film it
+# Try to integrate treading so you can have multiple functions running at once (change BPM on the fly)
+
 
 # Add an absolute value shifter [-1, 0, 1] but this might make the motion choppy at point of shift
 # Add a function to change any of the self values (amplitude, offset, period, phase, publish_hz, sleep_override, loop_repeats)
