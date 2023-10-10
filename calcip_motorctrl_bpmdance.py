@@ -35,19 +35,19 @@ def main():
         motor_control_obj.printer = None
         motor_control_obj.parse_data()
 
-        # Control commands here (see calcip_hl_control_functs.py)
+        # Control commands here -> see calcip_hl_control_functs.py
 
         motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
                                 publish_hz=200, bpm=40, 
                                 sleep_override=None, loop_repeats=32, 
                                 euler_array=np.array([1, 1, 1]),
-                                amplitude_array=np.array([0.5, 0.5, 0.4]),
+                                amplitude_array=np.array([0.4, 0.4, 0.3]),
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([1.0, 2.0, 1.0]), 
                                 phase_array=np.array([0, 0, 0]), 
                                 force=False,
                                 dev_check=True,
-                                printer='AnglesOnly')
+                                printer='angles')
         time.sleep(2)
 
         # Terminate control

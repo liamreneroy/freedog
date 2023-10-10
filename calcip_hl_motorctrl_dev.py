@@ -22,6 +22,12 @@ np.set_printoptions(formatter={'float': lambda x: '%7.4f' % (x)})
 
 class MotorControl:
 
+    '''
+    Creates a MotorControl object. The arguments that need to be passed are:
+        
+        printer = ['all', 'angles', None] -> depicts what will be printed when control is activated
+    '''
+
     def __init__(self, printer=None):
         '''
         You can use one of the 3 Presets WIFI_DEFAULTS, LOW_CMD_DEFAULTS or HIGH_CMD_DEFAULTS.
@@ -41,14 +47,12 @@ class MotorControl:
         time.sleep(0.5)                                     # Some time to collect packets ;)
 
         self.oscillating_functions = [math.sin, math.cos]
-
         self.mode_list = ['default', 'dance']
+        self.print_options = ['all', 'angles', None]
 
-        self.print_options = ['All', 'AnglesOnly', None]
-        self.printer = printer
+        self.printer = printer                              # Sets the printer
 
-        # Check if printer is valid
-        if self.printer not in self.print_options:
+        if self.printer not in self.print_options:          # Check if printer is valid
             self.printer = None
             print(f"WARNING: printer must be one of the following: {self.print_options}. Printer set to: {self.printer}\n")
 
@@ -63,13 +67,13 @@ class MotorControl:
         if self.printer:
             print(">> Parsing Data\n")        
 
-        data = self.conn.getData()
+        data = self.conn.getData()              # Get the data from the connection object
 
-        paket_count = 0
-        for paket in data:
-            self.hstate.parseData(paket)
+        paket_count = 0                         # Parse the data
+        for paket in data:                      
+            self.hstate.parseData(paket)        
 
-            if self.printer == 'All' and paket_count == 0:
+            if self.printer == 'all' and paket_count == 0:
                 print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
                 print(f'SN [{byte_print(self.hstate.SN)}]:\t{decode_sn(self.hstate.SN)}')
                 print(f'Ver [{byte_print(self.hstate.version)}]:\t{decode_version(self.hstate.version)}')
@@ -92,7 +96,8 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def recover_control(self):
-        ''' Recover control and put robot into standing pose'''
+        ''' Recover control and put robot into standing pose. Used at startup'''
+
         print(">> Executing: RECOVERY\n")           # Allows robot to start from any state: IDLE / FORCE_STAND / DAMPED
         self.hcmd.mode = MotorModeHigh.RECOVERY
         cmd_bytes = self.hcmd.buildCmd(debug=False) # Build the command
@@ -113,40 +118,42 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def terminate_control(self):
-        ''' Terminate control and break connection '''
-        print(">> Executing: FORCE_STAND\n")            # Put robot back into neutral standing state
-        self.hcmd.mode = MotorModeHigh.FORCE_STAND
+        ''' Terminate control and break connection. Used at shutdown'''
+
+        print(">> Executing: FORCE_STAND\n")            
+        self.hcmd.mode = MotorModeHigh.FORCE_STAND      # Put robot back into neutral standing state
         self.hcmd.euler = [0, 0, 0]
         self.hcmd.bodyHeight = 0.0
         cmd_bytes = self.hcmd.buildCmd(debug=False)     # Build the stand command
         self.conn.send(cmd_bytes)                       # Send the stand command
         time.sleep(1)                                   # Sleep for 1 second
 
-        print(">> Executing: STAND_DOWN\n")
-        self.hcmd.mode = MotorModeHigh.STAND_DOWN
+        print(">> Executing: STAND_DOWN\n")             
+        self.hcmd.mode = MotorModeHigh.STAND_DOWN       # Puts robot into lay-down position
         cmd_bytes = self.hcmd.buildCmd(debug=False)     # Build the lay-down command
         self.conn.send(cmd_bytes)                       # Send the lay-down command
         time.sleep(1)                                   # Sleep for 1 second
 
-        print(">> Executing: IDLE\n")
-        self.hcmd.mode = MotorModeHigh.IDLE
+        print(">> Executing: IDLE\n")                   
+        self.hcmd.mode = MotorModeHigh.IDLE             # Puts robot into idle state
         cmd_bytes = self.hcmd.buildCmd(debug=False)     # Build the idle command
         self.conn.send(cmd_bytes)                       # Send the idle command
         time.sleep(0.5)                                 # Sleep for 0.5 second
 
-        print(">> Executing: DAMPING\n")
-        self.hcmd.mode = MotorModeHigh.DAMPING
-        cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the final command
-        self.conn.send(cmd_bytes)                    # Send the final command
-        time.sleep(1)                           # Sleep for 1 second
+        print(">> Executing: DAMPING\n")                
+        self.hcmd.mode = MotorModeHigh.DAMPING          # Puts robot into damped state
+        cmd_bytes = self.hcmd.buildCmd(debug=False)     # Build the final command
+        self.conn.send(cmd_bytes)                       # Send the final command
+        time.sleep(1)                                   # Sleep for 1 second
         
-        return True                             # Break connection at end
+        return True                                     # Return True to break connection
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def override_sleep_rate(self):
         ''' Override sleep rate based on current self.sleep_override '''
+        
         print(f"WARNING: Overriding sleep_rate to {self.sleep_override}")
         print(f"::: BPM of {self.bpm} will be broken]")
 
@@ -158,10 +165,11 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def calculate_loop_rate(self):
-        # Calculate loop_rate (should be 1 if sleep_override is not used)
-        self.loop_rate = self.sleep_rate * self.publish_hz
-        if self.printer == 'All':
-            print(f"::: Resulting loop_rate: \t{self.loop_rate:0.4f} (Approx. {self.loop_rate:0.3f} second(s) per loop)\n")
+        ''' Calculate loop_rate. Should be 1 if sleep_override is not used.'''
+
+        self.loop_rate = self.sleep_rate * self.publish_hz   # Loop rate = number of published mgs x seconds to sleep between msgs 
+        if self.printer == 'all':
+            print(f"::: Resulting loop_rate: \t{self.loop_rate:0.3f} (Approx. {self.loop_rate:0.3f} secs per loop)\n")
         
         return
     
@@ -169,43 +177,44 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def rand_euler(self):
-        ''' Randomize euler_array and amplitude_array ''' # could also use randint(-1,1) to get -1, 0, 1 and remove euler_array
+        ''' Randomize euler_array and amplitude_array '''
         
-        self.euler_array = np.array([1, 1, 1])
+        self.euler_array = np.array([1, 1, 1])  # could also use randint(-1,1) to get -1, 0, 1 and remove euler_array
 
         ## If you want to only activate 2/3 Euler angles at random, you can:
-        # self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
-        # while self.euler_array.sum() <= 1:  
-        #     self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
+        #       self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
+        #       while self.euler_array.sum() <= 1:  
+        #           self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
 
-        self.amplitude_array = np.array([random.uniform(0.4, 0.55) * random.choice([-1, 1]), 
-                                         random.uniform(0.4, 0.55) * random.choice([-1, 1]),
-                                         random.uniform(0.3, 0.45) * random.choice([-1, 1])])
+        self.amplitude_array = np.array([random.uniform(0.4, 0.5) * random.choice([-1, 1]), 
+                                         random.uniform(0.4, 0.5) * random.choice([-1, 1]),
+                                         random.uniform(0.3, 0.4) * random.choice([-1, 1])])
         
-        period_scheme = random.randint(0, 2)
+        period_scheme = random.randint(0, 2)       # Set and randomize the period scheme
 
         if period_scheme == 0:
             period_list = np.array([1., 1., 4.])
         elif period_scheme == 1:
             period_list = np.array([1., 2., 4.])
         elif period_scheme == 2:
-            period_list = np.array([1., 2., 2.]) # Maybe remove this one if its too chaotic 
+            period_list = np.array([1., 2., 2.])   # Maybe remove this one if its too chaotic 
 
         random.shuffle(period_list)
         self.period_array=np.array([period_list[0], period_list[1], period_list[2]])
         
-        if self.ctrl_function == math.sin:
+
+        # Set up the phase array based on the control function (sin or cos)
+        if self.ctrl_function == math.sin:                
             self.phase_array=np.array([0., 0., 0.]) 
 
         elif self.ctrl_function == math.cos:
             for index_012 in range(0,3):
                 self.phase_array[index_012] = self.period_array[index_012] / -4.0
 
-        print(f">> New Scheme {period_scheme} of {self.period_array} - grep 0.0000")
-
-
         if self.printer:
-            print(f'>> New Traject @ timestep: {self.timestep}\n')
+            print(f">> New Euler Amplitude:\t\t[R, P, Y] = {self.amplitude_array}")
+            print(f">> New Euler Period:   \t\t[R, P, Y] = {self.period_array}")
+            print(f">> New Traject @ timestep:\t{self.timestep:05d}\n")
         
         return
     
@@ -213,10 +222,11 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def rand_ctrl_function(self):
-        # Sort through this to only take continuous functions
+        ''' Randomly selects the function to be used. This method is currently not implemented.'''
+
         self.ctrl_function = random.choice(self.oscillating_functions)        
         if self.printer:
-            print(f'>> Control Funct {self.ctrl_function.__name__} @ timestep: {self.timestep}\n')
+            print(f'>> Control Function {self.ctrl_function.__name__} @ timestep: {self.timestep:05d}\n')
         
         return
         
@@ -224,14 +234,15 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def swap_ctrl_function(self):
-        # Sort through this to only take continuous functions
+        ''' Swap the control function between sin and cos. This method is currently not implemented.'''
+
         if self.ctrl_function == math.sin:
             self.ctrl_function = math.cos
         elif self.ctrl_function == math.cos:
             self.ctrl_function = math.sin
 
         if self.printer:
-            print(f'>> Control Funct {self.ctrl_function.__name__} @ timestep: {self.timestep}\n')
+            print(f'>> Control Function {self.ctrl_function.__name__} @ timestep: {self.timestep:05d}\n')
         
         return
 
@@ -259,7 +270,7 @@ class MotorControl:
         bpm_to_bps_factored = (60. / self.bpm)              
         self.sleep_rate = (1. / int(self.publish_hz)) * bpm_to_bps_factored 
         
-        if self.printer == 'All':
+        if self.printer == 'all':
             print(f">> BPM set to: {self.bpm}")
             print(f"::: Resulting sleep rate: \t{self.sleep_rate:0.4f} (Sleeps {self.sleep_rate:0.4f} secs per msg)")
 
@@ -272,12 +283,12 @@ class MotorControl:
 
     def status_printer(self):
         print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
-        print(f'>> Executing: euler_control in [{self.mode}] mode @ timestep: {self.timestep}\n')
+        print(f'>> Executing: euler_control in [{self.mode}] mode @ timestep: {self.timestep:05d}\n')
         print(f'::: Control Function: {self.ctrl_function.__name__} \t(funct which dictates motion trajectory)')
         print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
         print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
         print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
-        print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} second(s) per loop)\n')
+        print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} secs per loop)\n')
         print(f'::: Euler Active: \t{self.euler_array}')
         print(f'::: Amplitude: \t\t{self.amplitude_array}')
         print(f'::: Period: \t\t{self.period_array}')
@@ -394,7 +405,6 @@ class MotorControl:
             print('::: Robot may move quickly and could damage itself\n')
 
         return
-    
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -409,11 +419,13 @@ class MotorControl:
                                 phase_array=np.array([0.0, 0.0, 0.0]), 
                                 force=False,
                                 dev_check=True,
-                                printer='All'):
+                                printer='all'):
         '''ARG RANGES:
         recall y = Asin(B(x + C)) + D   ///   A = amplitude, 2pi/B = period, C = phase shift, D = offset
 
         mode = ['default', 'dance', '...'] ->   Makes robot do variations of the default control loop.
+                                                default = robot will run specified euler angles on repeat
+                                                dance = robot will do dance with random euler angles
 
         ctrl_function = [math.sin, math.cos, ... ] -> Any continuous function from math library.
 
@@ -451,7 +463,7 @@ class MotorControl:
 
         dev_check = [True, None] -> If True, will check if all values are within range. If False, will skip all checks.
         
-        printer = ['All', 'AnglesOnly', None] -> If True, will print out the values of the control loop. If False, will not print out the values of the control loop.
+        printer = ['all', 'angles', None] -> If True, will print out the values of the control loop. If False, will not print out the values of the control loop.
 
         
         Note:   If you want a loop_rate of 1 as [1sec/loop] -> this is useful for making robot move to a given time signature..
@@ -492,7 +504,7 @@ class MotorControl:
         if self.dev_check:
             self.check_control_values()
 
-        if self.dev_check or self.printer == 'All':
+        if self.dev_check or self.printer == 'all':
             self.status_printer()
 
         if self.dev_check:
@@ -527,28 +539,28 @@ class MotorControl:
                 b = datetime.datetime.now()     
                 c = b - a
                 a = datetime.datetime.now()
-                print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler} \t LoopRate: {c.total_seconds()} secs\n')
+                print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)\n')
                 
-            elif self.timestep % 10 == 0 and self.printer:       # Print every timestep
-                print(f'TimeStep: {self.timestep:04d} \t  Euler RPY Angle: {self.hcmd.euler}\n')  # Comment out if you dont want to see every timestep
+            elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
+                print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler}\n')  # Comment out if you dont want to see every 10th timestep
 
             cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
             self.conn.send(cmd_bytes)                    # Send the command
 
             if self.mode == 'dance':
-                # After every second loop, either change the euler angles or reverse the trajectory
+                # After every 2nd loop, either change the euler angles or reverse the trajectory
                 if self.timestep % (self.publish_hz * 2) == 0 and self.timestep != 0:
                     next_move = random.getrandbits(1)   # Randomly choose to change euler angles or reverse trajectory
 
                     if next_move == 0 or (self.timestep % (self.publish_hz * 4) == 0 and self.timestep != 0):
                         self.rand_euler()               # New euler angles and params based on ctrl_funct selected
                         self.check_control_values()     # Checks values for safety
-                        if self.printer == 'All':
+                        if self.printer == 'all':
                             self.status_printer()       # Prints out values
 
                     elif next_move == 1:
                         if self.printer:
-                            print(f'>> Reverse Traject @ timestep: {self.timestep}\n')
+                            print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
                         self.amplitude_array = self.amplitude_array * -1
 
 
