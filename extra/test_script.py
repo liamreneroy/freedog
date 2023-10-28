@@ -1,11 +1,24 @@
 import numpy as np
 import random
+import math
+
+possible_functs = [math.sin, math.cos]
+
+ctrl_funcs = math.sin
+
+apple = possible_functs[1](90)
+print(apple)
 
 
-period_list = [1., 2., 4.]
 
-random.shuffle(period_list)
-
-
-print(period_list)
-
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))
+print(random.randint(0, 2))

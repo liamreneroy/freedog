@@ -7,6 +7,7 @@ from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
 from ucl.complex import motorCmd, led
 
 import calcip_hl_motorctrl_dev as chcf
+import user_defined_ctrl_functs as udcf
 
 import time
 import math
@@ -15,7 +16,7 @@ import numpy as np
 
 def main():
     # Initialize connection and highCmd, highState objects
-    motor_control_obj = chcf.MotorControl(printer='All')
+    motor_control_obj = chcf.MotorControl(printer='angles')
 
     # Parse data
     motor_control_obj.parse_data()
@@ -32,22 +33,20 @@ def main():
     while terminate == False:
 
         # Parse data
-        motor_control_obj.printer = None
         motor_control_obj.parse_data()
 
         # Control commands here -> see calcip_hl_control_functs.py
 
-        motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
-                                publish_hz=200, bpm=40, 
+        motor_control_obj.euler_control(mode='rand_dance', publish_hz=200, bpm=60, 
                                 sleep_override=None, loop_repeats=32, 
                                 euler_array=np.array([1, 1, 1]),
+                                ctrl_func_array=np.array([math.sin, udcf.neg_sin, udcf.abs_sin]),
                                 amplitude_array=np.array([0.4, 0.4, 0.3]),
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([1.0, 2.0, 1.0]), 
                                 phase_array=np.array([0, 0, 0]), 
                                 force=False,
-                                dev_check=True,
-                                printer='angles')
+                                dev_check=None)
         time.sleep(2)
 
         # Terminate control
@@ -57,19 +56,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-
-# VARIOUS CONTROL COMMANDS
-#         motor_control_obj.euler_control(mode='dance', ctrl_function=math.sin, 
-#                                 publish_hz=200, bpm=40, 
-#                                 sleep_override=None, loop_repeats=32, 
-#                                 euler_array=np.array([1, 1, 1]),
-#                                 amplitude_array=np.array([0.4, 0.4, 0.3]),
-#                                 offset_array=np.array([0.0, 0.0, 0.0]), 
-#                                 period_array=np.array([1.0, 2.0, 1.0]), 
-#                                 phase_array=np.array([0, 0, 0]), 
-#                                 force=False,
-#                                 dev_check=True,
-#                                 printer='angles')
-#         time.sleep(2)
-# ### 
