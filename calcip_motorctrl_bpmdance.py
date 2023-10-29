@@ -37,10 +37,10 @@ def main():
 
         # Control commands here -> see calcip_hl_control_functs.py
 
-        motor_control_obj.euler_control(mode='rand_dance', publish_hz=200, bpm=60, 
+        motor_control_obj.euler_control(mode='rand_dance', publish_hz=200, bpm=50, 
                                 sleep_override=None, loop_repeats=32, 
                                 euler_array=np.array([1, 1, 1]),
-                                ctrl_func_array=np.array([math.sin, udcf.neg_sin, udcf.abs_sin]),
+                                ctrl_func_array=np.array([udcf.abs_sin, math.sin, math.sin]),
                                 amplitude_array=np.array([0.4, 0.4, 0.3]),
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([1.0, 2.0, 1.0]), 

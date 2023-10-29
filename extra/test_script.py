@@ -2,23 +2,14 @@ import numpy as np
 import random
 import math
 
-possible_functs = [math.sin, math.cos]
+period_options = [1, 2, 4]
 
-ctrl_funcs = math.sin
-
-apple = possible_functs[1](90)
-print(apple)
-
-
-
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
-print(random.randint(0, 2))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))
+print(random.choice(period_options))

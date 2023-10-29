@@ -11,9 +11,9 @@ import datetime
 
 import math
 import random
-random.seed(222) # random.seed(time.time())  eventually use this
+random.seed(15) # random.seed(time.time())  eventually use this
 
-import user_defined_ctrl_functs as udf
+import user_defined_ctrl_functs as udcf
 
 import numpy as np
 np.set_printoptions(formatter={'float': lambda x: '%7.4f' % (x)})
@@ -47,15 +47,16 @@ class MotorControl:
         self.conn.send(cmd_bytes)                           # Send empty command to tell the dog the receive port and initialize the connection
         time.sleep(0.5)                                     # Some time to collect packets ;)
 
-        self.oscillating_functions = [math.sin, udf.abs_sin, udf.neg_abs_sin]  # removed math.cos
-        self.mode_list = ['default', 'dance']
+        self.oscillating_functions = [math.sin, udcf.neg_sin, udcf.abs_sin, udcf.neg_abs_sin]  # removed math.cos
+        self.mode_list = ['default', 'rand_dance']
         self.print_options = ['all', 'angles', None]
 
-        self.printer = printer                              # Sets the printer
+        self.printer = printer.lower()                              # Sets the printer
 
-        if self.printer not in self.print_options:          # Check if printer is valid
+        # Check if printer is valid
+        if self.printer not in self.print_options:
+            print(f"WARNING: printer {self.printer} must be one of the following: {self.print_options}\n::: Printer set to: None\n")
             self.printer = None
-            print(f"WARNING: printer must be one of the following: {self.print_options}. Printer set to: {self.printer}\n")
 
         print(">> MotorControl Initialized\n")        
 
@@ -187,49 +188,33 @@ class MotorControl:
         #       while self.euler_array.sum() <= 1:  
         #           self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
 
-        self.amplitude_array = np.array([random.uniform(0.4, 0.5) * random.choice([-1, 1]), 
-                                         random.uniform(0.4, 0.5) * random.choice([-1, 1]),
+        self.amplitude_array = np.array([random.uniform(0.4, 0.55) * random.choice([-1, 1]), 
+                                         random.uniform(0.4, 0.55) * random.choice([-1, 1]),
                                          random.uniform(0.3, 0.4) * random.choice([-1, 1])])
         
 
-        if self.bpm <= 45:                          # Set and randomize the period scheme if BPM<=45
-            period_scheme = random.randint(0, 3)       
-            if period_scheme == 0:
-                period_list = np.array([1., 1., 4.])
-            elif period_scheme == 1:
-                period_list = np.array([1., 2., 4.])
-            elif period_scheme == 2:
-                period_list = np.array([1., 2., 2.])    
-            elif period_scheme == 3:
-                period_list = np.array([1., 1., 2.]) 
+        period_scheme = random.randint(0, 4)              # Set and randomize the period scheme     
+        if period_scheme == 0:
+            self.period_array = np.array([1., 1., 4.])
+        elif period_scheme == 1:
+            self.period_array = np.array([1., 2., 2.])
+        elif period_scheme == 2:
+            self.period_array = np.array([1., 2., 4.])
+        elif period_scheme == 3:
+            self.period_array = np.array([2., 2., 2.])  
+        elif period_scheme == 4 and self.bpm <= 45:       # slightly different scheme if BPM<=45
+            self.period_array = np.array([1., 1., 2.]) 
+        elif period_scheme == 4 and self.bpm > 45:        # slightly different scheme if BPM>45
+            self.period_array = np.array([2., 2., 4.]) 
 
+        random.shuffle(self.period_array)
 
-        else:                                       # Set and randomize the period scheme if BPM>45
-            period_scheme = random.randint(0, 2)      
-            if period_scheme == 0:
-                period_list = np.array([1., 1., 4.])
-            elif period_scheme == 1:
-                period_list = np.array([1., 2., 4.])
-            elif period_scheme == 2:
-                period_list = np.array([1., 2., 2.])
-
-        random.shuffle(period_list)
-        self.period_array=np.array([period_list[0], period_list[1], period_list[2]])
-        
-
-
-        # Set up the phase array based on the control function (sin or cos)
-        if self.ctrl_function == math.cos:
-            for index_012 in range(0,3):
-                self.phase_array[index_012] = self.period_array[index_012] / -4.0
-
-        else:                                           # self.ctrl_function == math.sin .. or math.sin
-            self.phase_array=np.array([0., 0., 0.]) 
-
+        # Set phase_array (this shouldn't change if you're only using sin functions)
+        self.phase_array=np.array([0., 0., 0.]) 
 
         if self.printer:
-            print(f">> New Euler Amplitude:\t\t[R, P, Y] = {self.amplitude_array}")
-            print(f">> New Euler Period:   \t\t[R, P, Y] = {self.period_array}")
+            print(f">> New Euler Amplitude:\t\t[R, P, Y] = {self.amplitude_array}\n")
+            print(f">> New Euler Period:   \t\t[R, P, Y] = {self.period_array}\n")
             print(f">> New Traject @ timestep:\t{self.timestep:05d}\n")
         
         return
@@ -237,12 +222,19 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def rand_ctrl_function(self):
+    def rand_ctrl_func_array(self):
         ''' Randomly selects the function to be used. This method is currently not implemented.'''
 
-        self.ctrl_function = random.choice(self.oscillating_functions)        
+        # Always keen one as normal sin() function
+        self.ctrl_func_array = [math.sin, 
+                                math.sin, 
+                                random.choice(self.oscillating_functions)]      
+        
+        # Shuffle order
+        random.shuffle(self.ctrl_func_array)
+
         if self.printer:
-            print(f'>> Control Function {self.ctrl_function.__name__} @ timestep: {self.timestep:05d}\n')
+            print(f'>> New Euler Ctrl Func:\t\t[R, P, Y] = [{self.ctrl_func_array[0].__name__}  {self.ctrl_func_array[1].__name__}  {self.ctrl_func_array[2].__name__}] @ timestep: {self.timestep:05d}\n')
         
         return
 
@@ -284,12 +276,12 @@ class MotorControl:
     def status_printer(self):
         print('\n+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=')
         print(f'>> Executing: euler_control in [{self.mode}] mode @ timestep: {self.timestep:05d}\n')
-        print(f'::: Control Function: {self.ctrl_function.__name__} \t(funct which dictates motion trajectory)')
         print(f'::: Publish Rate: {self.publish_hz} hz \t({self.publish_hz} messages per loop)')
         print(f'::: Beats Per Min: {self.bpm} bpm \t({self.bpm} loops per minute)')
         print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
         print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} secs per loop)\n')
         print(f'::: Euler Active: \t{self.euler_array}')
+        print(f'::: Control Funcs:\t[{self.ctrl_func_array[0].__name__}  {self.ctrl_func_array[1].__name__}  {self.ctrl_func_array[2].__name__}]')
         print(f'::: Amplitude: \t\t{self.amplitude_array}')
         print(f'::: Period: \t\t{self.period_array}')
         print(f'::: Phase Shift: \t{self.phase_array}')
@@ -308,14 +300,10 @@ class MotorControl:
         if self.mode not in self.mode_list:
             raise ValueError(f"mode must be one of the following: {self.mode_list}\n")
 
-        # Check if printer is valid
-        if self.printer not in self.print_options:
-            self.printer = None
-            print(f"WARNING: printer must be one of the following: {self.print_options}. Printer set to: {self.printer}\n")
-
         # Check if ctrl_function is valid
-        if self.ctrl_function not in self.oscillating_functions:
-            raise ValueError(f"ctrl_function must be one of the following: {self.oscillating_functions}\n")
+        for ctrl_function in range(len(self.ctrl_func_array)):
+            if self.ctrl_func_array[ctrl_function] not in self.oscillating_functions:
+                raise ValueError(f"ctrl_function at idx [{ctrl_function}] must be one of the following: {self.oscillating_functions}\n")
 
         # Check if publish_hz is valid
         if isinstance(self.publish_hz, int) == False or self.publish_hz > 1000 or self.publish_hz < 50:
@@ -359,7 +347,6 @@ class MotorControl:
                 if isinstance(period, float) == False or period > 16. or period < 1.:
                     raise ValueError("period values must be float within range [1., 16.] for each euler angle\n")
 
-
         # Check if phase is within range [-2pi, 2pi]
         phase_counter = 0
         for phase in self.phase_array:
@@ -379,26 +366,6 @@ class MotorControl:
                 self.phase_array[phase_counter] = phase
                 phase_counter += 1
 
-        # Check if phase is valid for sin() function
-        if self.ctrl_function == math.sin and self.force==False:
-            for index_012 in range(0,3):
-                if self.phase_array[index_012] != 0.:
-                    print(f'WARNING: phase value at idx[{index_012}] should be set to float [0.0] for sin() function')
-                    print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: 0.0')
-                    print(f"::: To force values, set 'force=True' \n")
-                    self.phase_array[index_012] = 0
-
-
-        # Check if phase is valid for cos() function
-        if self.ctrl_function == math.cos:
-            for index_012 in range(0,3):
-                if self.phase_array[index_012] != self.period_array[index_012] / -4.0:
-                    print(f'WARNING: phase value at idx[{index_012}] should be set to float [period/-4.0] for cos() function')   
-                    print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: {self.period_array[index_012] / -4.0}')
-                    print(f"::: To force values, set 'force=True' \n")
-                    self.phase_array[index_012] = self.period_array[index_012] / -4.0
-
-
         # Check if resulting loop_rate is lower than 1 and warn user if it is 
         if self.loop_rate < 1.0:
             print(f'WARNING: Loop rate of {self.loop_rate} is less than 1 [1sec/loop]')
@@ -409,25 +376,22 @@ class MotorControl:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def euler_control(self, mode='default', ctrl_function=math.sin, 
-                                publish_hz=200, bpm=30, 
+    def euler_control(self, mode='default', publish_hz=200, bpm=30, 
                                 sleep_override=None, loop_repeats=8, 
                                 euler_array=np.array([1, 1, 1]),
+                                ctrl_func_array=np.array([math.sin, math.sin, math.sin]),
                                 amplitude_array=np.array([0.5, 0.5, 0.4]),
                                 offset_array=np.array([0.0, 0.0, 0.0]), 
                                 period_array=np.array([2.0, 2.0, 2.0]), 
                                 phase_array=np.array([0.0, 0.0, 0.0]), 
                                 force=False,
-                                dev_check=True,
-                                printer='all'):
+                                dev_check=True):
         '''ARG RANGES:
         recall y = Asin(B(x + C)) + D   ///   A = amplitude, 2pi/B = period, C = phase shift, D = offset
 
-        mode = ['default', 'dance', '...'] ->   Makes robot do variations of the default control loop.
+        mode = ['default', 'rand_dance', '...'] ->   Makes robot do variations of the default control loop.
                                                 default = robot will run specified euler angles on repeat
-                                                dance = robot will do dance with random euler angles
-
-        ctrl_function = [math.sin, math.cos, ... ] -> Any continuous function from math library.
+                                                rand_dance = robot will do random dance with random euler angles
 
         publish_hz = [50, 1000] (Hz - int) ->   Number of msgs being sent per loop. Smoother motion at higher hz but more comp expensive. 
                                                 If robot acting undesirably, try decreasing this value. Recommended 100+ 
@@ -444,6 +408,8 @@ class MotorControl:
                                         Recommended to choose numbers that are 2^n.
 
         euler_array = [0, 1] -> 1/True enables the sin_roll, sin_pitch, sin_yaw respectively. 0/False disables the sin_roll, sin_pitch, sin_yaw respectively.
+
+        ctrl_func_array = [math.sin, udcf.neg_sin, ... ] -> Continuous functions from math or user_defined 'udcf' library.
 
         amplitude_array = [-0.55, 0.55] (radians - float) ->  Larger value equals bigger angle. Negative is reversed. Recommended 0.6 for full angle.
                                                             CAREFUL WITH THIS ONE.. dont max joint limits. Set skip_check=False first to check your code.
@@ -479,18 +445,17 @@ class MotorControl:
         # Calculate sleep_rate while taking into account bpm_override if it exists
 
         self.mode = mode
-        self.ctrl_function = ctrl_function
         self.publish_hz = publish_hz
         self.sleep_override = sleep_override
         self.loop_repeats = loop_repeats
         self.euler_array = euler_array
+        self.ctrl_func_array = ctrl_func_array
         self.amplitude_array = amplitude_array
         self.offset_array = offset_array
         self.period_array = period_array
         self.phase_array = phase_array
         self.force = force
         self.dev_check = dev_check
-        self.printer = printer
         self.timestep = 0
 
         # Changes bpm and sets sleep_rate
@@ -529,9 +494,9 @@ class MotorControl:
                 # C = self.phase_array[0]
                 # D = self.offset_array[0]
 
-                self.amplitude_array[0] * self.ctrl_function(2*math.pi / self.period_array[0] * ((self.timestep / self.publish_hz) + self.phase_array[0])) + self.offset_array[0],
-                self.amplitude_array[1] * self.ctrl_function(2*math.pi / self.period_array[1] * ((self.timestep / self.publish_hz) + self.phase_array[1])) + self.offset_array[1],
-                self.amplitude_array[2] * self.ctrl_function(2*math.pi / self.period_array[2] * ((self.timestep / self.publish_hz) + self.phase_array[2])) + self.offset_array[2]]),
+                self.amplitude_array[0] * self.ctrl_func_array[0](2*math.pi / self.period_array[0] * ((self.timestep / self.publish_hz) + self.phase_array[0])) + self.offset_array[0],
+                self.amplitude_array[1] * self.ctrl_func_array[1](2*math.pi / self.period_array[1] * ((self.timestep / self.publish_hz) + self.phase_array[1])) + self.offset_array[1],
+                self.amplitude_array[2] * self.ctrl_func_array[2](2*math.pi / self.period_array[2] * ((self.timestep / self.publish_hz) + self.phase_array[2])) + self.offset_array[2]]),
                 self.euler_array)
 
             if self.timestep % self.publish_hz == 0 and self.printer:        # Print once per loop to check loop rate (should be 1.0 secs)
@@ -547,31 +512,30 @@ class MotorControl:
             self.conn.send(cmd_bytes)                    # Send the command
 
 
-            # DANCE LOGIC
-            if self.mode == 'dance':
+            # Random Dance Logic
+            if self.mode == 'rand_dance':
                 # After every 2nd loop, do one of four things:
-                    # A: Change the euler angles
-                    # B: Change the euler angles and reverse the trajectory
-                    # C: Reverse the trajectory
-                    # D: Nothing, continue trajectory for 2 more loops
+                    # A: Change ctrl and euler angles
+                    # B: Change ctrl and euler angles and reverse trajectory
+                    # C: Reverse trajectory
+                    # D: Change ctrl
 
                 if self.timestep % (self.publish_hz * 2) == 0 and self.timestep != 0:
                     next_move = random.getrandbits(2)   # Randomly choose to change euler angles or reverse trajectory
 
                     if next_move == 0 or (self.timestep % (self.publish_hz * max(self.period_array)) and self.timestep != 0):
-                        self.rand_ctrl_function()       # New ctrl function
+                        self.rand_ctrl_func_array()     # New ctrl functions
                         self.rand_euler()               # New euler angles and params
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'all':
                             self.status_printer()       
 
                     elif next_move == 1:
-                        self.rand_ctrl_function()       # New ctrl function
+                        self.rand_ctrl_func_array()     # New ctrl functions
                         self.rand_euler()               # New euler angles and params
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'all':
                             self.status_printer()       
-
                         if self.printer:
                             print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
                         self.amplitude_array = self.amplitude_array * -1
@@ -582,7 +546,7 @@ class MotorControl:
                         self.amplitude_array = self.amplitude_array * -1
 
                     elif next_move == 3:
-                        print('Let pass\n')
+                        self.rand_ctrl_func_array()     # New ctrl functions
 
 
             remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # replace self.timestep with i where I starts at 1
@@ -601,13 +565,17 @@ class MotorControl:
 
 
 ### ToDo List:
+
+# Outsource mode logic
+#  remove rand_dance logic from master function
+#  create other modes (e.g. push ups, dance_fast, dance_slow, pose) 
+
 # Get the robot to dance to a song and film it
-# Try to integrate treading so you can have multiple functions running at once (change BPM on the fly)
 
+# Add a function to change any of the self values (BPM, amplitude, offset, period etc.) 
+    # To do this you likely need the ability to have multiple functions running at once
+    # This is where you need ROS
 
-# Add an absolute value shifter [-1, 0, 1] but this might make the motion choppy at point of shift
-# Add a function to change any of the self values (amplitude, offset, period, phase, publish_hz, sleep_override, loop_repeats)
-# Create a function that can be used to create a smooth transition between two sin functions
 
 # Get the robot to walk in a line forward backwards 
 # Get the robot to walk in a circle 
@@ -615,3 +583,30 @@ class MotorControl:
 
 # Check: Maybe and ToDo 
 ###
+
+
+
+### Old Code:
+# # Set up the phase array based on the control function (sin or cos)
+# if self.ctrl_func_array == math.cos:
+#     for index_012 in range(0,3):
+#         self.phase_array[index_012] = self.period_array[index_012] / -4.0
+
+# # Check if phase is valid for sin() function
+# if self.ctrl_func_array == math.sin and self.force==False:
+#     for index_012 in range(0,3):
+#         if self.phase_array[index_012] != 0.:
+#             print(f'WARNING: phase value at idx[{index_012}] should be set to float [0.0] for sin() function')
+#             print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: 0.0')
+#             print(f"::: To force values, set 'force=True' \n")
+#             self.phase_array[index_012] = 0
+
+
+# # Check if phase is valid for cos() function
+# if self.ctrl_func_array == math.cos:
+#     for index_012 in range(0,3):
+#         if self.phase_array[index_012] != self.period_array[index_012] / -4.0:
+#             print(f'WARNING: phase value at idx[{index_012}] should be set to float [period/-4.0] for cos() function')   
+#             print(f'::: Overriding phase[{index_012}] of {self.phase_array[index_012]} to: {self.period_array[index_012] / -4.0}')
+#             print(f"::: To force values, set 'force=True' \n")
+#             self.phase_array[index_012] = self.period_array[index_012] / -4.0

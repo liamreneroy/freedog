@@ -11,7 +11,9 @@ import datetime
 
 import math
 import random
-random.seed(15) # random.seed(time.time())  eventually use this
+
+random.seed(55)           # used for testing
+random.seed(time.time())  # true randomness 
 
 import user_defined_ctrl_functs as udcf
 
@@ -57,7 +59,6 @@ class MotorControl:
         if self.printer not in self.print_options:
             print(f"WARNING: printer {self.printer} must be one of the following: {self.print_options}\n::: Printer set to: None\n")
             self.printer = None
-
 
         print(">> MotorControl Initialized\n")        
 
@@ -189,34 +190,25 @@ class MotorControl:
         #       while self.euler_array.sum() <= 1:  
         #           self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
 
-        self.amplitude_array = np.array([random.uniform(0.4, 0.55) * random.choice([-1, 1]), 
-                                         random.uniform(0.4, 0.55) * random.choice([-1, 1]),
-                                         random.uniform(0.3, 0.4) * random.choice([-1, 1])])
+        self.amplitude_array = np.array([random.uniform(0.5, 0.55) * random.choice([-1, 1]), 
+                                         random.uniform(0.5, 0.55) * random.choice([-1, 1]),
+                                         random.uniform(0.35, 0.4) * random.choice([-1, 1])])
         
 
-        period_scheme = random.randint(0, 5)              # Set and randomize the period scheme     
-        if period_scheme == 0:
-            self.period_array = np.array([1., 1., 4.])
-        elif period_scheme == 1:
-            self.period_array = np.array([1., 2., 2.])
-        elif period_scheme == 2:
-            self.period_array = np.array([1., 2., 4.])
-        elif period_scheme == 3:
-            self.period_array = np.array([2., 2., 2.])  
-        elif period_scheme == 4 and self.bpm <= 45:       # slightly different scheme if BPM<=45
-            self.period_array = np.array([1., 1., 2.]) 
-        elif period_scheme == 4 and self.bpm > 45:        # slightly different scheme if BPM>45
-            self.period_array = np.array([2., 2., 4.]) 
 
-        random.shuffle(self.period_array)
+        period_options = [1., 2., 4.]
+        self.period_array = np.array([1., 1., 1.])
+        
+        while np.sum(self.period_array) <= 3:
+            self.period_array = np.array([random.choice(period_options), random.choice(period_options), random.choice(period_options) ])
 
         # Set phase_array (this shouldn't change if you're only using sin functions)
         self.phase_array=np.array([0., 0., 0.]) 
 
         if self.printer:
+            print(f">> New Traject @ timestep:\t{self.timestep:05d}")
             print(f">> New Euler Amplitude:\t\t[R, P, Y] = {self.amplitude_array}")
             print(f">> New Euler Period:   \t\t[R, P, Y] = {self.period_array}")
-            print(f">> New Traject @ timestep:\t{self.timestep:05d}\n")
         
         return
     
@@ -235,7 +227,7 @@ class MotorControl:
         random.shuffle(self.ctrl_func_array)
 
         if self.printer:
-            print(f'>> Control Functions [{self.ctrl_func_array[0].__name__}  {self.ctrl_func_array[1].__name__}  {self.ctrl_func_array[2].__name__}] @ timestep: {self.timestep:05d}\n')
+            print(f'>> New Euler Ctrl Func:\t\t[R, P, Y] = [{self.ctrl_func_array[0].__name__}  {self.ctrl_func_array[1].__name__}  {self.ctrl_func_array[2].__name__}]\n')
         
         return
 
@@ -515,44 +507,42 @@ class MotorControl:
 
             # Random Dance Logic
             if self.mode == 'rand_dance':
-                # After every 2nd loop, do one of four things:
+                # After every 2nd loop, do one of three things:
                     # A: Change ctrl and euler angles
                     # B: Change ctrl and euler angles and reverse trajectory
                     # C: Reverse trajectory
-                    # D: Change ctrl
 
-                if self.timestep % (self.publish_hz * 2) == 0 and self.timestep != 0:
-                    next_move = random.getrandbits(2)   # Randomly choose to change euler angles or reverse trajectory
+                if self.timestep % (self.publish_hz * 2) == 0:
+                    next_move = random.randint(0, 3)    # Randomly choose to change euler angles or reverse trajectory
 
-                    if next_move == 0 or (self.timestep % (self.publish_hz * max(self.period_array)) and self.timestep != 0):
-                        self.rand_ctrl_func_array()     # New ctrl functions
+                    if next_move == 0 and (self.timestep % (self.publish_hz * max(self.period_array)) == 0):
                         self.rand_euler()               # New euler angles and params
+                        self.rand_ctrl_func_array()     # New ctrl functions
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'all':
                             self.status_printer()       
 
-
-                    elif next_move == 1:
-                        self.rand_ctrl_func_array()     # New ctrl functions
+                    elif next_move == 1 and (self.timestep % (self.publish_hz * max(self.period_array)) == 0):
                         self.rand_euler()               # New euler angles and params
+                        self.rand_ctrl_func_array()     # New ctrl functions
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'all':
                             self.status_printer()       
                         if self.printer:
                             print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
                         self.amplitude_array = self.amplitude_array * -1
-
 
                     elif next_move == 2:
                         if self.printer:
                             print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
                         self.amplitude_array = self.amplitude_array * -1
 
-
-                    elif next_move == 3:
+                    elif next_move == 3:                # Does a new trajectory while ignoring period 
+                        self.rand_euler()               # New euler angles and params
                         self.rand_ctrl_func_array()     # New ctrl functions
-                        if self.printer:
-                            print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
+                        self.check_control_values()     # Checks values for safety
+                        if self.printer == 'all':
+                            self.status_printer()  
 
 
             remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # replace self.timestep with i where I starts at 1

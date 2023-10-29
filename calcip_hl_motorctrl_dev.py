@@ -11,7 +11,9 @@ import datetime
 
 import math
 import random
-random.seed(555) # random.seed(time.time())  eventually use this
+
+random.seed(45)           # used for testing
+random.seed(time.time())  # true randomness 
 
 import user_defined_ctrl_functs as udcf
 
@@ -188,26 +190,17 @@ class MotorControl:
         #       while self.euler_array.sum() <= 1:  
         #           self.euler_array = np.array([random.getrandbits(1), random.getrandbits(1), random.getrandbits(1)])
 
-        self.amplitude_array = np.array([random.uniform(0.4, 0.55) * random.choice([-1, 1]), 
-                                         random.uniform(0.4, 0.55) * random.choice([-1, 1]),
-                                         random.uniform(0.3, 0.4) * random.choice([-1, 1])])
+        self.amplitude_array = np.array([random.uniform(0.5, 0.55) * random.choice([-1, 1]), 
+                                         random.uniform(0.5, 0.55) * random.choice([-1, 1]),
+                                         random.uniform(0.35, 0.4) * random.choice([-1, 1])])
         
 
-        period_scheme = random.randint(0, 4)              # Set and randomize the period scheme     
-        if period_scheme == 0:
-            self.period_array = np.array([1., 1., 4.])
-        elif period_scheme == 1:
-            self.period_array = np.array([1., 2., 2.])
-        elif period_scheme == 2:
-            self.period_array = np.array([1., 2., 4.])
-        elif period_scheme == 3:
-            self.period_array = np.array([2., 2., 2.])  
-        elif period_scheme == 4 and self.bpm <= 45:       # slightly different scheme if BPM<=45
-            self.period_array = np.array([1., 1., 2.]) 
-        elif period_scheme == 4 and self.bpm > 45:        # slightly different scheme if BPM>45
-            self.period_array = np.array([2., 2., 4.]) 
 
-        random.shuffle(self.period_array)
+        period_options = [1., 2., 4.]
+        self.period_array = np.array([1., 1., 1.])
+        
+        while np.sum(self.period_array) <= 3:
+            self.period_array = np.array([random.choice(period_options), random.choice(period_options), random.choice(period_options) ])
 
         # Set phase_array (this shouldn't change if you're only using sin functions)
         self.phase_array=np.array([0., 0., 0.]) 
@@ -522,14 +515,14 @@ class MotorControl:
                 if self.timestep % (self.publish_hz * 2) == 0:
                     next_move = random.randint(0, 3)    # Randomly choose to change euler angles or reverse trajectory
 
-                    if next_move == 0 and (self.timestep % (self.publish_hz * max(self.period_array)) == 0):
+                    if next_move == 0:
                         self.rand_euler()               # New euler angles and params
                         self.rand_ctrl_func_array()     # New ctrl functions
                         self.check_control_values()     # Checks values for safety
                         if self.printer == 'all':
                             self.status_printer()       
 
-                    elif next_move == 1 and (self.timestep % (self.publish_hz * max(self.period_array)) == 0):
+                    elif next_move == 1:
                         self.rand_euler()               # New euler angles and params
                         self.rand_ctrl_func_array()     # New ctrl functions
                         self.check_control_values()     # Checks values for safety
