@@ -15,7 +15,7 @@ import random
 random.seed(55)           # used for testing
 random.seed(time.time())  # true randomness 
 
-import user_defined_ctrl_functs as udcf
+import modules.user_defined_ctrl_functs as udcf
 
 import numpy as np
 np.set_printoptions(formatter={'float': lambda x: '%7.4f' % (x)})

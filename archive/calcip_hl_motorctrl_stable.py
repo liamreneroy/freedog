@@ -13,7 +13,7 @@ import math
 import random
 random.seed(15) # random.seed(time.time())  eventually use this
 
-import user_defined_ctrl_functs as udcf
+import modules.user_defined_ctrl_functs as udcf
 
 import numpy as np
 np.set_printoptions(formatter={'float': lambda x: '%7.4f' % (x)})
