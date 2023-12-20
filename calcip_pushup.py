@@ -7,7 +7,7 @@ from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
 from ucl.complex import motorCmd, led
 
 import modules.calcip_hl_motorctrl_dev as chcf
-import modules.user_defined_ctrl_functs as udcf
+import modules.user_defined_functs as udf
 
 import time
 import math
@@ -96,7 +96,7 @@ def main():
         motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
                                         sleep_override=None, loop_repeats=8, 
                                         euler_array=np.array([1, 1, 1]),
-                                        sin_func_array=np.array([math.sin, udcf.neg_abs_sin, udcf.neg_sin]),
+                                        sin_func_array=np.array([math.sin, udf.neg_abs_sin, udf.neg_sin]),
                                         amplitude_array=np.array([0.3, 0.45, 0.4]),
                                         offset_array=np.array([0.0, 0.0, 0.0]), 
                                         period_array=np.array([2.0, 2.0, 1.0]), 

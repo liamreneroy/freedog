@@ -1,5 +1,7 @@
 import math
 
+
+# Control functions
 def neg_sin(x):
     return -math.sin(x)
 
@@ -9,5 +11,9 @@ def abs_sin(x):
 def neg_abs_sin(x):
     return -abs(math.sin(x))
 
-# each angle gets its own function 
-# re-create the dance logic pass 
+
+
+# Other functions
+def reverse_array(original_array):
+    reversed_array = original_array[::-1]
+    return reversed_array
