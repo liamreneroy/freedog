@@ -24,9 +24,6 @@ def main():
     # Parse data
     motor_control_obj.parse_data()
 
-    # Recover Control
-    motor_control_obj.recover_control()
-
     # Get user to hit enter to continue
     print("WARNING: Ensure robot is placed in an open space\nType a BPM then hit 'enter' to continue...")
     bpm_input = input()
@@ -49,62 +46,52 @@ def main():
         print(f'\n::: Default [{control_bpm} BPM] being used\n')
 
 
+
     # Control loop
-    terminate = False
-    while terminate == False:
+    time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
 
-        # Parse data
-        motor_control_obj.parse_data()
+    # Do some push ups
+    motor_control_obj.push_up_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
+                                    sleep_override=None, loop_repeats=6,  
+                                    dev_check=None)
+    
+    # Look over to the side
+    motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
+                                    sleep_override=None, loop_repeats=2, 
+                                    euler_array=np.array([1, 0, 1]),
+                                    sin_func_array=np.array([math.sin, math.sin, math.sin]),
+                                    amplitude_array=np.array([0.5, 0.5, 0.4]),
+                                    offset_array=np.array([0.0, 0.0, 0.0]), 
+                                    period_array=np.array([4.0, 4.0, 4.0]), 
+                                    phase_array=np.array([0.0, 0.0, 0.0]), 
+                                    dev_check=None)
 
-        # Control commands here -> see calcip_hl_control_functs.py
+    # Do some more push ups
+    motor_control_obj.push_up_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
+                                    sleep_override=None, loop_repeats=6,  
+                                    dev_check=None)
+    
+    # Look up
+    motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
+                                    sleep_override=None, loop_repeats=2, 
+                                    euler_array=np.array([0, 1, 0]),
+                                    sin_func_array=np.array([math.sin, math.sin, math.sin]),
+                                    amplitude_array=np.array([0.5, -0.5, 0.4]),
+                                    offset_array=np.array([0.0, 0.0, 0.0]), 
+                                    period_array=np.array([1.0, 4.0, 1.0]), 
+                                    phase_array=np.array([0.0, 0.0, 0.0]), 
+                                    dev_check=None)
 
-        time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
-
-        # Do some push ups
-        motor_control_obj.push_up_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
-                                        sleep_override=None, loop_repeats=6,  
-                                        dev_check=None)
-        
-        # Look over to the side
-        motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
-                                        sleep_override=None, loop_repeats=2, 
-                                        euler_array=np.array([1, 0, 1]),
-                                        sin_func_array=np.array([math.sin, math.sin, math.sin]),
-                                        amplitude_array=np.array([0.5, 0.5, 0.4]),
-                                        offset_array=np.array([0.0, 0.0, 0.0]), 
-                                        period_array=np.array([4.0, 4.0, 4.0]), 
-                                        phase_array=np.array([0.0, 0.0, 0.0]), 
-                                        dev_check=None)
-
-        # Do some more push ups
-        motor_control_obj.push_up_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
-                                        sleep_override=None, loop_repeats=6,  
-                                        dev_check=None)
-        
-        # Look up
-        motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
-                                        sleep_override=None, loop_repeats=2, 
-                                        euler_array=np.array([0, 1, 0]),
-                                        sin_func_array=np.array([math.sin, math.sin, math.sin]),
-                                        amplitude_array=np.array([0.5, -0.5, 0.4]),
-                                        offset_array=np.array([0.0, 0.0, 0.0]), 
-                                        period_array=np.array([1.0, 4.0, 1.0]), 
-                                        phase_array=np.array([0.0, 0.0, 0.0]), 
-                                        dev_check=None)
-
-        # Dance it out
-        motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
-                                        sleep_override=None, loop_repeats=8, 
-                                        euler_array=np.array([1, 1, 1]),
-                                        sin_func_array=np.array([math.sin, udf.neg_abs_sin, udf.neg_sin]),
-                                        amplitude_array=np.array([0.3, 0.45, 0.4]),
-                                        offset_array=np.array([0.0, 0.0, 0.0]), 
-                                        period_array=np.array([2.0, 2.0, 1.0]), 
-                                        phase_array=np.array([0.0, 0.0, 0.0]), 
-                                        dev_check=None)
-
-        # Terminate control
-        terminate = motor_control_obj.terminate_control()
+    # Dance it out
+    motor_control_obj.sin_euler_ctrl(mode='default', publish_hz=200, bpm=control_bpm, 
+                                    sleep_override=None, loop_repeats=8, 
+                                    euler_array=np.array([1, 1, 1]),
+                                    sin_func_array=np.array([math.sin, udf.neg_abs_sin, udf.neg_sin]),
+                                    amplitude_array=np.array([0.3, 0.45, 0.4]),
+                                    offset_array=np.array([0.0, 0.0, 0.0]), 
+                                    period_array=np.array([2.0, 2.0, 1.0]), 
+                                    phase_array=np.array([0.0, 0.0, 0.0]), 
+                                    dev_check=None)
 
 
 if __name__ == "__main__":

@@ -10,12 +10,7 @@ import modules.calcip_hl_motorctrl_dev as chcf
 import modules.user_defined_functs as udf
 
 import time
-import math
-import numpy as np
 
-
-# README:
-# Run this script to some music and set the BPM accordingly 
 
 
 def main():
@@ -23,6 +18,9 @@ def main():
     motor_control_obj = chcf.MotorControl(printer='minimal')
     # Parse data
     motor_control_obj.parse_data()
+
+    # Recover Control
+    motor_control_obj.recover_control()
 
     # Get user to hit enter to continue
     print("WARNING: Ensure robot is placed in an open space\nType a BPM then hit 'enter' to continue...")
@@ -42,24 +40,43 @@ def main():
         print(f'\n::: Input [{bpm_input} BPM] factored to [{control_bpm} BPM] with [{motor_control_obj.bpm_limiter} MAX] limiter\n')
 
     else:
-        control_bpm = 30.
+        control_bpm = 60. # THIS IS DIFFERENT THAN OTHER SCRIPS
         print(f'\n::: Default [{control_bpm} BPM] being used\n')
 
 
-
     # Control loop
-    time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
+    terminate = False
+    while terminate == False:
 
-    # Random dance
-    motor_control_obj.sin_euler_ctrl(mode='rand_dance', publish_hz=200, bpm=control_bpm, 
-                                    sleep_override=None, loop_repeats=32, 
-                                    euler_array=np.array([1, 1, 1]),
-                                    sin_func_array=np.array([math.sin, math.sin, math.sin]),
-                                    amplitude_array=np.array([0.45, 0.5, 0.4]),
-                                    offset_array=np.array([0.0, 0.0, 0.0]), 
-                                    period_array=np.array([2.0, 2.0, 2.0]), 
-                                    phase_array=np.array([0.0, 0.0, 0.0]), 
+        # Parse data
+        motor_control_obj.parse_data()
+
+        time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
+
+        # Take pose 01
+        motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
+                                    bpm=60, bars=4, loop_repeats=1,
+                                    force_bpm_limiter=60,
+                                    use_param_time=True,
+                                    delay_start=0.0,  
+                                    sleep_override=None,
+                                    move_to_pose_base_time = 1.5,
+                                    pose_raw_param_dict = {'roll': 'neutral', 
+                                                        'pitch': 'up', 
+                                                        'yaw': 'left', 
+                                                        'body_height': 'high', 
+                                                        'body_orientation': 'user',
+                                                        'pose_duration': 'short',
+                                                        'velocity': 'normal',
+                                                        'smoothness': 'shaky'},
                                     dev_check=None)
+
+
+        time.sleep(4./control_bpm * 60) # sleep for 2 beats at BPM rate
+
+        # Terminate control
+        # Level to zero at terminate
+        terminate = motor_control_obj.terminate_control()
 
 
 if __name__ == "__main__":

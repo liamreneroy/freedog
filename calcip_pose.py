@@ -10,13 +10,7 @@ import modules.calcip_hl_motorctrl_dev as chcf
 import modules.user_defined_functs as udf
 
 import time
-import math
-import numpy as np
 
-
-# README:
-#
-#
 
 
 def main():
@@ -25,8 +19,6 @@ def main():
     # Parse data
     motor_control_obj.parse_data()
 
-    # Recover Control
-    motor_control_obj.recover_control()
 
     # Get user to hit enter to continue
     print("WARNING: Ensure robot is placed in an open space\nType a BPM then hit 'enter' to continue...")
@@ -51,16 +43,7 @@ def main():
 
 
     # Control loop
-    terminate = False
-    while terminate == False:
-
-        # Parse data
-        motor_control_obj.parse_data()
-
-        time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
-
-        # Take pose 01
-        motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
+    motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
                                     bpm=60, bars=4, loop_repeats=1,
                                     force_bpm_limiter=60,
                                     use_param_time=True,
@@ -68,19 +51,15 @@ def main():
                                     sleep_override=None,
                                     move_to_pose_base_time = 1.5,
                                     pose_raw_param_dict = {'roll': 'neutral', 
-                                                        'pitch': 'down', 
-                                                        'yaw': 'neutral', 
-                                                        'body_height': 'normal', 
+                                                        'pitch': 'up', 
+                                                        'yaw': 'left', 
+                                                        'body_height': 'high', 
                                                         'body_orientation': 'user',
-                                                        'pose_duration': 'long',
-                                                        'movement_velocity': 'normal'},
+                                                        'pose_duration': 'short',
+                                                        'velocity': 'normal',
+                                                        'smoothness': 'shaky'},
                                     dev_check=None)
 
-        time.sleep(2./control_bpm * 60) # sleep for 2 beats at BPM rate
-
-        # Terminate control
-        # Level to zero at terminate
-        terminate = motor_control_obj.terminate_control()
 
 
 if __name__ == "__main__":

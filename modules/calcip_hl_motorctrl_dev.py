@@ -12,7 +12,7 @@ import datetime
 import math
 import random
 
-random.seed(45)           # used for testing
+# random.seed(45)           # used for testing
 random.seed(time.time())  # true randomness 
 
 import modules.user_defined_functs as udf
@@ -380,14 +380,13 @@ class MotorControl:
             print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
             print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} secs per loop)\n')
             print(f'::: Repeat Loop: \t{self.loop_repeats} times\n')
-            print(f'>> Pose Parameters:\nROLL: {self.roll}\nPITCH: {self.pitch}\nYAW: {self.yaw}\nBODY HEIGHT: {self.body_height}\nBODY ORIENTATION: {self.body_orientation}\nPOSE DURATION: {self.pose_duration}\nMOVEMENT VELOCITY: {self.movement_velocity}\n')
+            print(f'>> Pose Parameters:\nROLL: {self.roll}\nPITCH: {self.pitch}\nYAW: {self.yaw}\nBODY HEIGHT: {self.body_height}\nBODY ORIENTATION: {self.body_orientation}\nPOSE DURATION: {self.pose_duration}\nVELOCITY: {self.velocity}\nSMOOTHNESS: {self.smoothness}\n')
             print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
 
 
         return
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -625,6 +624,7 @@ class MotorControl:
                     print(f'>> Reverse Traject @ timestep: \t{self.timestep:05d}\n')
                 self.amplitude_array = self.amplitude_array * -1
 
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -747,13 +747,12 @@ class MotorControl:
 
         return
 
-
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # POSE CONTROL FUNCTIONS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
     def pose_ctrl(self, mode='default', publish_hz=200, 
                             bpm=60, bars=4, loop_repeats=1,
@@ -768,7 +767,8 @@ class MotorControl:
                                                     'body_height': 'normal', 
                                                     'body_orientation': 'user',
                                                     'pose_duration': 'medium',
-                                                    'movement_velocity': 'normal'},
+                                                    'velocity': 'normal',
+                                                    'smoothness': 'smooth'},
                             dev_check=True):
 
 
@@ -800,15 +800,15 @@ class MotorControl:
         pose_conv_param_dict = self.pose_param_conversion(pose_raw_param_dict)
 
 
-        # Set all values of motion params to self.values
+        # Set all converted values of motion params to self.values
         self.roll = pose_conv_param_dict['roll']
         self.pitch = pose_conv_param_dict['pitch']
         self.yaw = pose_conv_param_dict['yaw']
         self.body_height =  pose_conv_param_dict['body_height']
         self.body_orientation = pose_conv_param_dict['body_orientation']
         self.pose_duration = pose_conv_param_dict['pose_duration']
-        self.movement_velocity = pose_conv_param_dict['movement_velocity']
-
+        self.velocity = pose_conv_param_dict['velocity']
+        self.smoothness = pose_conv_param_dict['smoothness']
 
         # Special condition for pose duration
         if use_param_time == False:
@@ -838,14 +838,24 @@ class MotorControl:
             # Start the loop timer
             start = time.time()
             
+            move_step_qty = int((self.publish_hz*move_to_pose_base_time)/self.velocity)
+            array_noise = np.random.uniform(-self.smoothness, self.smoothness, move_step_qty)
+
             # Task A: Move to pose
             print(">> Task A: Move to Pose\n")
 
-            move_step_qty = int((self.publish_hz*move_to_pose_base_time)/self.movement_velocity)
             roll_steps_a_array = np.linspace(0, self.roll, move_step_qty)
             pitch_steps_a_array = np.linspace(0, self.pitch, move_step_qty)
             yaw_steps_a_array = np.linspace(0, self.yaw, move_step_qty)
-            
+            body_height_steps_a_array = np.linspace(0, self.body_height, move_step_qty)
+
+            # Add the noise if smoothness is set:
+            if pose_raw_param_dict['smoothness'] == 'shaky':
+                roll_steps_a_array[int(math.ceil(self.publish_hz/5)):] = [x + y for x, y in zip(roll_steps_a_array[int(math.ceil(self.publish_hz/5)):], array_noise[int(math.ceil(self.publish_hz/5)):])]
+                pitch_steps_a_array[int(math.ceil(self.publish_hz/5)):] = [x + y for x, y in zip(pitch_steps_a_array[int(math.ceil(self.publish_hz/5)):], array_noise[int(math.ceil(self.publish_hz/5)):])]
+                yaw_steps_a_array[int(math.ceil(self.publish_hz/5)):] = [x + y for x, y in zip(yaw_steps_a_array[int(math.ceil(self.publish_hz/5)):], array_noise[int(math.ceil(self.publish_hz/5)):])]
+                body_height_steps_a_array[int(math.ceil(self.publish_hz/5)):] = [x + y for x, y in zip(body_height_steps_a_array[int(math.ceil(self.publish_hz/5)):], array_noise[int(math.ceil(self.publish_hz/5)):])]
+
             for self.timestep in range (0, move_step_qty):
 
                 # Set highCmd values 
@@ -854,7 +864,7 @@ class MotorControl:
                                             pitch_steps_a_array[self.timestep],
                                             yaw_steps_a_array[self.timestep]])
                 
-                # self.hcmd.bodyHeight = self.body_height
+                self.hcmd.bodyHeight = body_height_steps_a_array[self.timestep]
 
                 cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
                 self.conn.send(cmd_bytes)                    # Send the command
@@ -863,10 +873,10 @@ class MotorControl:
                     b = datetime.datetime.now()     
                     c = b - a
                     a = datetime.datetime.now()
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}\t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
                     
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler}')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
@@ -877,15 +887,17 @@ class MotorControl:
             # Task B: Hold pose
             print("\n>> Task B: Hold pose\n")
             steps_b_range = int(move_step_qty + self.publish_hz*self.pose_duration) 
+
             for self.timestep in range (move_step_qty, steps_b_range):
             
                 # Set highCmd values 
                 self.hcmd.mode = MotorModeHigh.FORCE_STAND   
-                self.hcmd.euler = np.array([self.roll, 
-                                            self.pitch,
-                                            self.yaw])
+                self.hcmd.euler = np.array([self.roll + (np.random.uniform(-1, 1)*self.smoothness),
+                                            self.pitch + (np.random.uniform(-1, 1)*self.smoothness),
+                                            self.yaw + (np.random.uniform(-1, 1)*self.smoothness)])
                 
-                # self.hcmd.bodyHeight = self.body_height
+                self.hcmd.bodyHeight = self.body_height + (np.random.uniform(-1, 1)*self.smoothness)
+
 
                 cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
                 self.conn.send(cmd_bytes)                    # Send the command
@@ -895,10 +907,10 @@ class MotorControl:
                     b = datetime.datetime.now()     
                     c = b - a
                     a = datetime.datetime.now()
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}\t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
                     
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler}')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # Calculate delay
@@ -909,12 +921,13 @@ class MotorControl:
 
             # Task C: Return to neutral
             print("\n>> Task C: Move to Neutral\n")
-
             steps_c_range = int(steps_b_range + move_step_qty) 
+
             roll_steps_c_array = udf.reverse_array(roll_steps_a_array)
-            pitch_steps_c_array = udf.reverse_array(pitch_steps_a_array)
+            pitch_steps_c_array = udf.reverse_array(pitch_steps_a_array) 
             yaw_steps_c_array = udf.reverse_array(yaw_steps_a_array)
-            
+            body_height_steps_c_array = udf.reverse_array(body_height_steps_a_array)
+
             for self.timestep in range (steps_b_range, steps_c_range):
 
                 # Set highCmd values 
@@ -923,7 +936,7 @@ class MotorControl:
                                             pitch_steps_c_array[self.timestep - steps_b_range],
                                             yaw_steps_c_array[self.timestep - steps_b_range]])
                 
-                # self.hcmd.bodyHeight = self.body_height
+                self.hcmd.bodyHeight = body_height_steps_c_array[self.timestep - steps_b_range]
 
                 cmd_bytes = self.hcmd.buildCmd(debug=False)  # Build the command
                 self.conn.send(cmd_bytes)                    # Send the command
@@ -932,10 +945,10 @@ class MotorControl:
                     b = datetime.datetime.now()     
                     c = b - a
                     a = datetime.datetime.now()
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}\t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
                     
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
-                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler}')
+                    print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
@@ -947,47 +960,11 @@ class MotorControl:
 
         return
 
-
-        # # B: Hold pose
-        # for self.timestep in range (0, (self.publish_hz*self.pose_duration)/self.movement_velocity):
-
-        #     # Set highCmd values 
-        #     self.hcmd.mode = MotorModeHigh.FORCE_STAND   
-        #     self.hcmd.euler = np.multiply(np.array([self.roll, self.pitch, self.yaw]), self.euler_array)
-        #     self.hcmd.bodyHeight = self.body_height
-
-        #     cmd_bytes = self.hcmd.buildCmd(debug=False)         # Build the command
-        #     self.conn.send(cmd_bytes)                           # Send the command
-
-        #     remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) 
-        #     # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
-
-        #     time.sleep(remaining_delay)        # Sleep for the remaining delay
-
-
-        # # C: Move to neutral
-        # for self.timestep in range (0, (self.publish_hz*move_to_pose_base_time)/self.movement_velocity):
-                
-        #         # Set highCmd values 
-        #         self.hcmd.mode = MotorModeHigh.FORCE_STAND   
-        #         self.hcmd.euler = np.multiply(np.array([0, 0, 0]), self.euler_array)
-        #         self.hcmd.bodyHeight = 0.0
-    
-        #         cmd_bytes = self.hcmd.buildCmd(debug=False)         # Build the command
-        #         self.conn.send(cmd_bytes)                           # Send the command
-    
-        #         remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) 
-        #         # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
-    
-        #         time.sleep(remaining_delay)        # Sleep for the remaining delay
-
                 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def pose_param_conversion(self, param_dict):
         ''' Converts pose params to numeric equivalents '''
-        
-        # Create an empty dictionary
         conv_param_dict = {}
 
         # ROLL
@@ -1000,6 +977,7 @@ class MotorControl:
         else:
             raise ValueError("roll must be one of the following: ['left', 'neutral', 'right']\n")
 
+
         # PITCH
         if param_dict['pitch'] == 'down':
             conv_param_dict['pitch'] = 0.5
@@ -1010,30 +988,34 @@ class MotorControl:
         else:
             raise ValueError("pitch must be one of the following: ['down', 'neutral', 'up']\n")
         
+
         # YAW
         if param_dict['yaw'] == 'left':
-            conv_param_dict['yaw'] = 0.5
+            conv_param_dict['yaw'] = 0.3
         elif param_dict['yaw'] == 'neutral':
             conv_param_dict['yaw'] = 0.0
         elif param_dict['yaw'] == 'right':
-            conv_param_dict['yaw'] = -0.5
+            conv_param_dict['yaw'] = -0.3
         else:
             raise ValueError("yaw must be one of the following: ['left', 'neutral', 'right']\n")
         
+
         # BODY_HEIGHT
         if param_dict['body_height'] == 'low':
-            conv_param_dict['body_height'] = -0.5
-        elif param_dict['body_height'] == 'normal':
-            conv_param_dict['body_height'] = 0.0
+            conv_param_dict['body_height'] = -0.25
+        elif param_dict['body_height'] == 'neutral':
+            conv_param_dict['body_height'] = -0.05
         elif param_dict['body_height'] == 'high':
-            conv_param_dict['body_height'] = 0.5
+            conv_param_dict['body_height'] = 0.2
         else:
-            raise ValueError("body_height must be one of the following: ['low', 'normal', 'high']\n")
+            raise ValueError("body_height must be one of the following: ['low', 'neutral', 'high']\n")
         
+
         # BODY_ORIENTATION (passive)
         conv_param_dict['body_orientation'] = param_dict['body_orientation']
 
-        # Pose Duration
+
+        # POSE DURATION
         if param_dict['pose_duration'] == 'short':
             conv_param_dict['pose_duration'] = 1.0
         elif param_dict['pose_duration'] == 'medium':
@@ -1043,16 +1025,26 @@ class MotorControl:
         else:
             raise ValueError("pose_duration must be one of the following: ['short', 'medium', 'long']\n")
         
-        # Movement Velocity
-        if param_dict['movement_velocity'] == 'slow':
-            conv_param_dict['movement_velocity'] = 0.5
-        elif param_dict['movement_velocity'] == 'normal':
-            conv_param_dict['movement_velocity'] = 1.0
-        elif param_dict['movement_velocity'] == 'fast':
-            conv_param_dict['movement_velocity'] = 2.0
+
+        # VELOCITY
+        if param_dict['velocity'] == 'slow':
+            conv_param_dict['velocity'] = 0.5
+        elif param_dict['velocity'] == 'normal':
+            conv_param_dict['velocity'] = 1.0
+        elif param_dict['velocity'] == 'fast':
+            conv_param_dict['velocity'] = 2.0
         else:
-            raise ValueError("movement_velocity must be one of the following: ['slow', 'normal', 'fast']\n")
+            raise ValueError("velocity must be one of the following: ['slow', 'normal', 'fast']\n")
         
+
+        # SMOOTHNESS
+        if param_dict['smoothness'] == 'smooth':
+            conv_param_dict['smoothness'] = 0
+        elif param_dict['smoothness'] == 'shaky':
+            conv_param_dict['smoothness'] = 0.1
+        else:
+            raise ValueError("smoothness must be one of the following: ['smooth', 'shaky']\n")
+
         if self.printer:
             print(f">> Raw Param Dict: {param_dict}\n")
             print(f">> Converted Param Dict: {conv_param_dict}\n")
@@ -1061,13 +1053,10 @@ class MotorControl:
 
 
 
-### ToDo List:
-
-# Outsource mode logic
-#  remove rand_dance logic from master function
-#  create other modes (e.g. hold_pose) 
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ToDo List:
 # Add a function to change any of the self values (BPM, amplitude, offset, period etc.) 
     # To do this you likely need the ability to have multiple functions running at once
     # This is where you need ROS

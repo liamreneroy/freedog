@@ -1,5 +1,5 @@
 import math
-
+import numpy as np
 
 # Control functions
 def neg_sin(x):
@@ -13,7 +13,7 @@ def neg_abs_sin(x):
 
 
 
-# Other functions
+# Array functions
 def reverse_array(original_array):
     reversed_array = original_array[::-1]
     return reversed_array
