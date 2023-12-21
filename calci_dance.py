@@ -6,7 +6,7 @@ from ucl.unitreeConnection import unitreeConnection, HIGH_WIFI_DEFAULTS, HIGH_WI
 from ucl.enums import MotorModeHigh, GaitType, SpeedLevel
 from ucl.complex import motorCmd, led
 
-import modules.calcip_hl_motorctrl_dev as chcf
+import modules.calci_hl_ctrl_dev as chcf
 import modules.user_defined_functs as udf
 
 import time

@@ -1,7 +1,7 @@
-# Go1 Free-Dog SDK - Modified for Simple High-Level Control
+# Go1 Free-Dog SDK for High-Level Control
 
 ## Origin
-This is a repository forked from: https://github.com/Bin4ry/free-dog-sdk.git
+This repository is forked from: https://github.com/Bin4ry/free-dog-sdk.git. This fork provides additional features and simplified control scripts to control the UniTree Go1 Quadruped EDU robot.
 
 
 ## How to Use
