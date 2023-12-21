@@ -1,7 +1,8 @@
 import math
 import numpy as np
 
-# Control functions
+
+# Oscillating control functions
 def neg_sin(x):
     return -math.sin(x)
 
