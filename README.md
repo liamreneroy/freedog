@@ -1,7 +1,7 @@
 # Go1 Free-Dog SDK for High-Level Control
 
 ## Origin
-This repository is forked from: https://github.com/Bin4ry/free-dog-sdk.git. This fork provides additional features and simplified control scripts to control the UniTree Go1 Quadruped EDU robot.
+This repository is forked from: https://github.com/Bin4ry/free-dog-sdk.git. This fork provides simplified high-level control scripts for the UniTree Go1 Quadruped robot.
 
 
 ## How to Use
@@ -83,6 +83,6 @@ The dog should move now, fully controlled via Lowlevel. Congratulations :)
 
 
 
-## Birds of a Feather?
-Looking for Quadruped friends? Stop by "TheDogPound - Animal control for stray robot dogs" Slack group, and join #faux-level and #unitree for support assistance.
+## Looking for Quadruped friends?
+Stop by "TheDogPound - Animal control for stray robot dogs" Slack group, and join #faux-level and #unitree for support assistance.
 https://join.slack.com/t/robotdogs/shared_invite/zt-24ep8mqn4-1p42Aq7owRv9klLI~3C5Pw
