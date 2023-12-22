@@ -55,9 +55,9 @@ def main():
                                                         'yaw': 'left', 
                                                         'body_height': 'high', 
                                                         'body_orientation': 'user',
-                                                        'pose_duration': 'short',
+                                                        'pose_duration': 'medium',
                                                         'velocity': 'normal',
-                                                        'smoothness': 'shaky'},
+                                                        'smoothness': 'smooth'},
                                     dev_check=None)
 
 
