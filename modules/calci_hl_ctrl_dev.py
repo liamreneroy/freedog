@@ -764,10 +764,10 @@ class MotorControl:
                             pose_raw_param_dict = {'roll': 'neutral', 
                                                     'pitch': 'neutral', 
                                                     'yaw': 'neutral', 
-                                                    'body_height': 'normal', 
+                                                    'body_height': 'neutral', 
                                                     'body_orientation': 'user',
                                                     'pose_duration': 'medium',
-                                                    'velocity': 'normal',
+                                                    'velocity': 'medium',
                                                     'smoothness': 'smooth'},
                             dev_check=True):
 
@@ -1029,12 +1029,12 @@ class MotorControl:
         # VELOCITY
         if param_dict['velocity'] == 'slow':
             conv_param_dict['velocity'] = 0.5
-        elif param_dict['velocity'] == 'normal':
+        elif param_dict['velocity'] == 'medium':
             conv_param_dict['velocity'] = 1.0
         elif param_dict['velocity'] == 'fast':
             conv_param_dict['velocity'] = 2.0
         else:
-            raise ValueError("velocity must be one of the following: ['slow', 'normal', 'fast']\n")
+            raise ValueError("velocity must be one of the following: ['slow', 'medium', 'fast']\n")
         
 
         # SMOOTHNESS
