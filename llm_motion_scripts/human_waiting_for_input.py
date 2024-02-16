@@ -53,9 +53,9 @@ def main():
                                     pose_raw_param_dict = {'roll': 'neutral', 
                                                         'pitch': 'neutral', 
                                                         'yaw': 'neutral', 
-                                                        'body_height': 'neutral', 
+                                                        'body_height': 'low', 
                                                         'body_direction': 'user',
-                                                        'pose_duration': 'medium',
+                                                        'pose_duration': 'long',
                                                         'velocity': 'medium',
                                                         'smoothness': 'smooth'},
                                     dev_check=None)
