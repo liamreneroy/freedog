@@ -52,11 +52,11 @@ def main():
                                     move_to_pose_base_time = 1.5,
                                     pose_raw_param_dict = {'roll': 'right', 
                                                         'pitch': 'forward', 
-                                                        'yaw': 'right', 
-                                                        'body_height': 'high', 
+                                                        'yaw': 'neutral', 
+                                                        'body_height': 'low', 
                                                         'body_direction': 'object',
-                                                        'pose_duration': 'short',
-                                                        'velocity': 'fast',
+                                                        'pose_duration': 'medium',
+                                                        'velocity': 'slow',
                                                         'smoothness': 'shaky'},
                                     dev_check=None)
 

@@ -51,13 +51,13 @@ def main():
                                     sleep_override=None,
                                     move_to_pose_base_time = 1.5,
                                     pose_raw_param_dict = {'roll': 'right', 
-                                                        'pitch': 'neutral', 
+                                                        'pitch': 'backward', 
                                                         'yaw': 'neutral', 
-                                                        'body_height': 'high', 
+                                                        'body_height': 'neutral', 
                                                         'body_direction': 'object',
-                                                        'pose_duration': 'long',
-                                                        'velocity': 'slow',
-                                                        'smoothness': 'shaky'},
+                                                        'pose_duration': 'short',
+                                                        'velocity': 'medium',
+                                                        'smoothness': 'smooth'},
                                     dev_check=None)
 
 
