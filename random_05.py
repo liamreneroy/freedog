@@ -54,7 +54,7 @@ def main():
                                                         'pitch': 'backward', 
                                                         'yaw': 'left', 
                                                         'body_height': 'neutral', 
-                                                        'body_direction': 'object',
+                                                        'body_direction': 'user',
                                                         'pose_duration': 'long',
                                                         'velocity': 'medium',
                                                         'smoothness': 'smooth'},

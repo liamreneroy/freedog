@@ -980,11 +980,11 @@ class MotorControl:
 
         # PITCH (Body Lean)
         if param_dict['pitch'] == 'backward':
-            conv_param_dict['pitch'] = 0.5
+            conv_param_dict['pitch'] = -0.5
         elif param_dict['pitch'] == 'neutral':
             conv_param_dict['pitch'] = 0.0
         elif param_dict['pitch'] == 'forward':
-            conv_param_dict['pitch'] = -0.5
+            conv_param_dict['pitch'] = 0.5
         else:
             raise ValueError("pitch must be one of the following: ['backward', 'neutral', 'forward']\n")
         
@@ -1041,7 +1041,7 @@ class MotorControl:
         if param_dict['smoothness'] == 'smooth':
             conv_param_dict['smoothness'] = 0
         elif param_dict['smoothness'] == 'shaky':
-            conv_param_dict['smoothness'] = 0.1
+            conv_param_dict['smoothness'] = 0.15
         else:
             raise ValueError("smoothness must be one of the following: ['smooth', 'shaky']\n")
 
