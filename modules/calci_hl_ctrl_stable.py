@@ -123,6 +123,19 @@ class MotorControl:
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    # Get robot's joint angles
+    def get_joint_angles(self):
+        ''' Get joint angles from the robot'''
+
+        data = self.conn.getData()              # Get the data from the connection object
+        self.hstate.parseData(data[0])          # Parse the data
+
+        joint_angles = np.array([self.hstate.motorstate[i].q for i in range(0, 12)])  # Get joint angles
+
+        return joint_angles
+    
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     def recover_control(self):
         ''' Recover control and put robot into standing pose. Used at startup'''
 
@@ -380,7 +393,7 @@ class MotorControl:
             print(f'::: Sleep Rate: {self.sleep_rate:0.4f} secs \t(Sleeps {self.sleep_rate:0.4f} secs per msg)\n')
             print(f'RESULTING LOOP RATE: {self.loop_rate:0.4f} \t(Approx. {self.loop_rate:0.4f} secs per loop)\n')
             print(f'::: Repeat Loop: \t{self.loop_repeats} times\n')
-            print(f'>> Pose Parameters:\nROLL: {self.roll}\nPITCH: {self.pitch}\nYAW: {self.yaw}\nBODY HEIGHT: {self.body_height}\nBODY ORIENTATION: {self.body_orientation}\nPOSE DURATION: {self.pose_duration}\nVELOCITY: {self.velocity}\nSMOOTHNESS: {self.smoothness}\n')
+            print(f'>> Pose Parameters:\nROLL: {self.roll}\nPITCH: {self.pitch}\nYAW: {self.yaw}\nBODY HEIGHT: {self.body_height}\nBODY DIRECTION: {self.body_direction}\nPOSE DURATION: {self.pose_duration}\nVELOCITY: {self.velocity}\nSMOOTHNESS: {self.smoothness}\n')
             print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
 
 
@@ -764,10 +777,10 @@ class MotorControl:
                             pose_raw_param_dict = {'roll': 'neutral', 
                                                     'pitch': 'neutral', 
                                                     'yaw': 'neutral', 
-                                                    'body_height': 'normal', 
-                                                    'body_orientation': 'user',
+                                                    'body_height': 'neutral', 
+                                                    'body_direction': 'user',
                                                     'pose_duration': 'medium',
-                                                    'velocity': 'normal',
+                                                    'velocity': 'medium',
                                                     'smoothness': 'smooth'},
                             dev_check=True):
 
@@ -805,7 +818,7 @@ class MotorControl:
         self.pitch = pose_conv_param_dict['pitch']
         self.yaw = pose_conv_param_dict['yaw']
         self.body_height =  pose_conv_param_dict['body_height']
-        self.body_orientation = pose_conv_param_dict['body_orientation']
+        self.body_direction = pose_conv_param_dict['body_direction']
         self.pose_duration = pose_conv_param_dict['pose_duration']
         self.velocity = pose_conv_param_dict['velocity']
         self.smoothness = pose_conv_param_dict['smoothness']
@@ -909,6 +922,7 @@ class MotorControl:
                     a = datetime.datetime.now()
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}\t(Real LR: {c.total_seconds():0.4f} // Targ LR: {self.loop_rate:0.4f} secs)')
                     
+
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
@@ -967,7 +981,7 @@ class MotorControl:
         ''' Converts pose params to numeric equivalents '''
         conv_param_dict = {}
 
-        # ROLL
+        # ROLL (Body Tilt)
         if param_dict['roll'] == 'left':
             conv_param_dict['roll'] = -0.5
         elif param_dict['roll'] == 'neutral':
@@ -978,18 +992,18 @@ class MotorControl:
             raise ValueError("roll must be one of the following: ['left', 'neutral', 'right']\n")
 
 
-        # PITCH
-        if param_dict['pitch'] == 'down':
-            conv_param_dict['pitch'] = 0.5
+        # PITCH (Body Lean)
+        if param_dict['pitch'] == 'backward':
+            conv_param_dict['pitch'] = -0.5
         elif param_dict['pitch'] == 'neutral':
             conv_param_dict['pitch'] = 0.0
-        elif param_dict['pitch'] == 'up':
-            conv_param_dict['pitch'] = -0.5
+        elif param_dict['pitch'] == 'forward':
+            conv_param_dict['pitch'] = 0.5
         else:
-            raise ValueError("pitch must be one of the following: ['down', 'neutral', 'up']\n")
+            raise ValueError("pitch must be one of the following: ['backward', 'neutral', 'forward']\n")
         
 
-        # YAW
+        # YAW (Body Turn)
         if param_dict['yaw'] == 'left':
             conv_param_dict['yaw'] = 0.3
         elif param_dict['yaw'] == 'neutral':
@@ -1011,8 +1025,8 @@ class MotorControl:
             raise ValueError("body_height must be one of the following: ['low', 'neutral', 'high']\n")
         
 
-        # BODY_ORIENTATION (passive)
-        conv_param_dict['body_orientation'] = param_dict['body_orientation']
+        # BODY_DIRECTION (passive)
+        conv_param_dict['body_direction'] = param_dict['body_direction']
 
 
         # POSE DURATION
@@ -1029,19 +1043,19 @@ class MotorControl:
         # VELOCITY
         if param_dict['velocity'] == 'slow':
             conv_param_dict['velocity'] = 0.5
-        elif param_dict['velocity'] == 'normal':
+        elif param_dict['velocity'] == 'medium':
             conv_param_dict['velocity'] = 1.0
         elif param_dict['velocity'] == 'fast':
             conv_param_dict['velocity'] = 2.0
         else:
-            raise ValueError("velocity must be one of the following: ['slow', 'normal', 'fast']\n")
+            raise ValueError("velocity must be one of the following: ['slow', 'medium', 'fast']\n")
         
 
         # SMOOTHNESS
         if param_dict['smoothness'] == 'smooth':
             conv_param_dict['smoothness'] = 0
         elif param_dict['smoothness'] == 'shaky':
-            conv_param_dict['smoothness'] = 0.1
+            conv_param_dict['smoothness'] = 0.15
         else:
             raise ValueError("smoothness must be one of the following: ['smooth', 'shaky']\n")
 

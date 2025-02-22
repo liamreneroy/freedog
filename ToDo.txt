@@ -1,0 +1,10 @@
+# ToDo List:
+
+# Add a function to change any of the self values (BPM, amplitude, offset, period etc.) 
+    # To do this you likely need the ability to have multiple functions running at once
+    # This is where you need ROS
+
+
+# Get the robot to walk in a line forward backwards 
+# Get the robot to walk in a circle 
+# Start doing motion such as walking in circle or line or spinning on the spot or jumping

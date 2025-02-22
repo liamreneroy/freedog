@@ -42,6 +42,10 @@ def main():
         print(f'\n::: Default [{control_bpm} BPM] being used\n')
 
 
+    # Get joint angles
+    current_joint_angles = motor_control_obj.get_joint_angles()
+    print(f'::: Start joint angles: \n{current_joint_angles}\n')
+
     # Control loop
     motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
                                     bpm=60, bars=4, loop_repeats=1,
@@ -50,7 +54,7 @@ def main():
                                     delay_start=0.0,  
                                     sleep_override=None,
                                     move_to_pose_base_time = 1.5,
-                                    pose_raw_param_dict = {'roll': 'neutral', 
+                                    pose_raw_param_dict = {'roll': 'left', 
                                                         'pitch': 'neutral', 
                                                         'yaw': 'neutral', 
                                                         'body_height': 'neutral', 
@@ -60,6 +64,10 @@ def main():
                                                         'smoothness': 'smooth'},
                                     dev_check=None)
 
+
+    # Get joint angles
+    current_joint_angles = motor_control_obj.get_joint_angles()
+    print(f'::: End joint angles: \n{current_joint_angles}\n')
 
 if __name__ == "__main__":
     main()
