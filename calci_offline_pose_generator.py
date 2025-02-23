@@ -43,7 +43,8 @@ def main():
 
 
     # Control loop
-    motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
+
+    angle_height_log_list = motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
                                     bpm=60, bars=4, loop_repeats=1,
                                     force_bpm_limiter=60,
                                     use_param_time=True,
@@ -58,7 +59,34 @@ def main():
                                                         'pose_duration': 'medium',
                                                         'velocity': 'medium',
                                                         'smoothness': 'smooth'},
-                                    dev_check=None)
+                                    dev_check=None,
+                                    angle_height_logger=True)
+
+    print("\n::: Logging Complete\n")
+    print(f"::: Total Log Entries: {len(angle_height_log_list)}\n")
+    print("::: First Entry:")
+    print(*angle_height_log_list[0].items(), sep='\n')
+    print("\n::: 20th Entry\n")
+    print(*angle_height_log_list[19].items(), sep='\n')
+    print("\n::: Last Entry\n")
+    print(*angle_height_log_list[-1].items(), sep='\n')
+
+
+    # ToDo 
+    # 1. Create a numpy array for the shape of the action space
+    # 2. Iterate through the action space combinations, populate numpy array with the lists of log entries
+    # 3. Edit the lists with front/back blanks to ensure they are all the same length
+    # 4. Save the numpy array to a file
+
+    # # Convert log list to flattened numpy array
+    # angle_height_log_np = udf.log_list_to_np(angle_height_log_list)
+    # print("\n::: Log List Converted to Numpy Array\n")
+    # print(f"::: Numpy Array Shape: {angle_height_log_np.shape}\n")
+    # print("::: Numpy Array\n")
+    # print(angle_height_log_np)
+    # print("\n::: Numpy Array Saved to 'angle_height_log_np.npy'\n")
+    # # Save numpy array
+    # udf.save_np_array(angle_height_log_np, 'angle_height_log_np.npy')
 
 
 if __name__ == "__main__":

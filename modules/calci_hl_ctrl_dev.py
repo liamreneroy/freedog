@@ -894,6 +894,7 @@ class MotorControl:
         - pose_raw_param_dict (dict): A dictionary containing raw parameters for pose control.
         - dev_check (bool): Enables or disables development checks. Default is True.
         - angle_height_logger (bool): Causes pose_ctrl to output list of dictionaries logging eulers/heighs at 10th timesteps. Default is None.
+        
         """
 
 
@@ -905,6 +906,7 @@ class MotorControl:
             self.bpm_limiter = force_bpm_limiter
 
         # Set all values to self.values
+        self.angle_height_logger = angle_height_logger
         self.dev_check = dev_check
         self.loop_repeats = loop_repeats
         self.mode = mode
@@ -937,13 +939,8 @@ class MotorControl:
 
 
         # Setup logger for euler angles and body height
-        if angle_height_logger:
-            
-            # create an empty list to store the euler angles and body height
+        if self.angle_height_logger:
             self.angle_height_log = []
-            
-
-
 
         # Special condition for pose duration
         if use_param_time == False:
@@ -1013,15 +1010,17 @@ class MotorControl:
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
-                    # create a dictionary to store the euler angles and body height
-                    angle_height_dict = {
+                # At every 10th timestep, append a dictionary denoting the timestep, euler angles and body height
+                if self.angle_height_logger and self.timestep % 10 ==0:
+                    self.angle_height_log.append({
                         'timestep': self.timestep,
-                        'body_direction': 'user',
-                        'roll': 0,
-                        'pitch': 0,
-                        'yaw': 0,
-                        'body_height': 0
-                    }
+                        'body_direction': self.body_direction,
+                        'roll': self.hcmd.euler[0],
+                        'pitch': self.hcmd.euler[1],
+                        'yaw': self.hcmd.euler[2],
+                        'body_height': self.hcmd.bodyHeight
+                    })
+
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
@@ -1058,6 +1057,17 @@ class MotorControl:
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
+
+                # At every 10th timestep, append a dictionary denoting the timestep, euler angles and body height
+                if self.angle_height_logger and self.timestep % 10 ==0:
+                    self.angle_height_log.append({
+                        'timestep': self.timestep,
+                        'body_direction': self.body_direction,
+                        'roll': self.hcmd.euler[0],
+                        'pitch': self.hcmd.euler[1],
+                        'yaw': self.hcmd.euler[2],
+                        'body_height': self.hcmd.bodyHeight
+                    })
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
@@ -1096,6 +1106,17 @@ class MotorControl:
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
+                # At every 10th timestep, append a dictionary denoting the timestep, euler angles and body height
+                if self.angle_height_logger and self.timestep % 10 ==0:
+                    self.angle_height_log.append({
+                        'timestep': self.timestep,
+                        'body_direction': self.body_direction,
+                        'roll': self.hcmd.euler[0],
+                        'pitch': self.hcmd.euler[1],
+                        'yaw': self.hcmd.euler[2],
+                        'body_height': self.hcmd.bodyHeight
+                    })
+
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
 
@@ -1104,7 +1125,11 @@ class MotorControl:
         print(f'\n>> End of: pose_ctrl in [{self.mode}] mode\n')        
         print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')
 
-        return
-          
+        if angle_height_logger:
+            return self.angle_height_log
+
+        else:
+            return
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
