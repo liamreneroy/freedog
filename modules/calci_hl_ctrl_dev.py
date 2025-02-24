@@ -1025,7 +1025,8 @@ class MotorControl:
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
 
-                time.sleep(remaining_delay)        # Sleep for the remaining delay
+                if self.angle_height_logger is None:
+                    time.sleep(remaining_delay)        # Sleep for the remaining delay
             
 
             # Task B: Hold pose
@@ -1072,7 +1073,8 @@ class MotorControl:
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0) # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                      # Uncomment to see remaining delay
 
-                time.sleep(remaining_delay)        # Sleep for the remaining delay
+                if self.angle_height_logger is None:
+                    time.sleep(remaining_delay)        # Sleep for the remaining delay
             
 
             # Task C: Return to neutral
@@ -1106,21 +1108,22 @@ class MotorControl:
                 elif self.timestep % 10 == 0 and self.printer:                                      # Print every 10th timestep
                     print(f'TimeStep: {self.timestep:05d} \tEuler RPY Angle: {self.hcmd.euler} \t Body Height: {self.hcmd.bodyHeight:6.3f}')
 
-                # At every 10th timestep, append a dictionary denoting the timestep, euler angles and body height
-                if self.angle_height_logger and self.timestep % 10 ==0:
-                    self.angle_height_log.append({
-                        'timestep': self.timestep,
-                        'body_direction': self.body_direction,
-                        'roll': self.hcmd.euler[0],
-                        'pitch': self.hcmd.euler[1],
-                        'yaw': self.hcmd.euler[2],
-                        'body_height': self.hcmd.bodyHeight
-                    })
+                # # At every 10th timestep, append a dictionary denoting the timestep, euler angles and body height
+                # if self.angle_height_logger and self.timestep % 10 ==0:
+                #     self.angle_height_log.append({
+                #         'timestep': self.timestep,
+                #         'body_direction': self.body_direction,
+                #         'roll': self.hcmd.euler[0],
+                #         'pitch': self.hcmd.euler[1],
+                #         'yaw': self.hcmd.euler[2],
+                #         'body_height': self.hcmd.bodyHeight
+                #     })
 
                 remaining_delay = max(start + ((self.timestep+1) * self.sleep_rate) - time.time(), 0)   # Calculate delay
                 # print("remaining delay: %s" % remaining_delay)                                        # Uncomment to see remaining delay
-
-                time.sleep(remaining_delay)        # Sleep for the remaining delay
+                
+                if self.angle_height_logger is None:
+                    time.sleep(remaining_delay)        # Sleep for the remaining delay
 
         print(f'\n>> End of: pose_ctrl in [{self.mode}] mode\n')        
         print('+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=\n')

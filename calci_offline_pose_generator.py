@@ -10,6 +10,35 @@ import modules.calci_hl_ctrl_dev as chcf
 import modules.user_defined_functs as udf
 
 import time
+import numpy as np
+
+# Create numpy array for the action space
+motion_parameters = {
+    "0": ["user", "object"],
+    "1": ["left", "neutral", "right"],
+    "2": ["backwards.", "neutral", "forward"],
+    "3": ["low", "neutral", "high"],
+    "4": ["smooth", "shaky"],
+    "5": ["slow", "medium", "fast"]
+    }
+
+# create an array for the action space with lists of motion parameters 
+action_space = np.empty((2, 3, 3, 3, 2, 3), dtype=object)
+for idx in np.ndindex(action_space.shape):
+    action_space[idx] = []
+
+
+for idx in np.ndindex(action_space.shape):
+    # Map each index of the tuple to the corresponding motion parameter.
+    P1 = motion_parameters["0"][idx[0]]
+    P2 = motion_parameters["1"][idx[1]]
+    P3 = motion_parameters["2"][idx[2]]
+    P4 = motion_parameters["3"][idx[3]]
+    P5 = motion_parameters["4"][idx[4]]
+    P6 = motion_parameters["5"][idx[5]]
+
+
+    print(f"Index {idx}: {P1}, {P2}, {P3}, {P4}, {P5}, {P6}")
 
 
 
@@ -43,7 +72,6 @@ def main():
 
 
     # Control loop
-
     angle_height_log_list = motor_control_obj.pose_ctrl(mode='default', publish_hz=200, 
                                     bpm=60, bars=4, loop_repeats=1,
                                     force_bpm_limiter=60,
@@ -51,10 +79,10 @@ def main():
                                     delay_start=0.0,  
                                     sleep_override=None,
                                     move_to_pose_base_time = 1.5,
-                                    pose_raw_param_dict = {'roll': 'neutral', 
-                                                        'pitch': 'neutral', 
+                                    pose_raw_param_dict = {'roll': 'left', 
+                                                        'pitch': 'forward', 
                                                         'yaw': 'neutral', 
-                                                        'body_height': 'neutral', 
+                                                        'body_height': 'high', 
                                                         'body_direction': 'user',
                                                         'pose_duration': 'medium',
                                                         'velocity': 'medium',

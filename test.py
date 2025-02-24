@@ -1,11 +1,26 @@
 import math
 
-param_dict = 'object'
+import numpy as np
 
-# BODY_DIRECTION (yaw angle of the robots whole body)
-if param_dict == 'user':
-    conv_param_dict = 0.0
-elif param_dict == 'object':
-    conv_param_dict= 90 * math.pi / 180
 
-print("conv_param_dict: ", conv_param_dict)
+action_space = np.empty((2, 2, 3), dtype=object)
+
+# Fill each element with a new empty list
+for idx in np.ndindex(action_space.shape):
+    action_space[idx] = []
+
+print(action_space)
+
+
+motion_parameters = {
+    "0": ["user", "object"],
+    "1": ["left", "neutral", "right"],
+    "2": ["backwards.", "neutral", "forward"],
+    "3": ["low", "neutral", "high"],
+    "4": ["smooth", "shaky"],
+    "5": ["slow", "medium", "fast"]
+    }
+
+
+
+print(motion_parameters[str(1)][1])
