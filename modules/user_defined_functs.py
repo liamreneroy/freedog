@@ -22,25 +22,3 @@ def reverse_array(original_array):
     return reversed_array
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Kinematics functions
-
-# Calculate XYZ locations using forward kinematics and 12 joint angles in np.array
-# def forward_kinematics(joint_angles):
-#     # Joint angles are in radians
-
-#     # Define robot's dimensions using URDF file
-#     # 
-
-#     pass
-
-# # Calculate robot's XYZ joint locations from joint angles
-# def get_joint_xyz(self):
-#     ''' Get joint XYZ locations from the robot'''
-
-#     joint_angles = self.get_joint_angles()        # Get joint angles
-
-#     # Calculate XYZ locations using forward kinematics and 12 joint angles in np.array
-#     joint_xyz = forward_kinematics(joint_angles)
-
-#     return joint_xyz
