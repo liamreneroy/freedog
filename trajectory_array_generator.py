@@ -16,8 +16,8 @@ import numpy as np
 # SETTINGS
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-go1_raw_trajectory_array_filename = 'go1_raw_trajectory_array.npy'
-go1_transformed_trajectory_array_filename = 'go1_transformed_trajectory_array.npy'
+go1_raw_trajectory_array_filename = 'data/go1_raw_trajectory_array.npy'
+go1_transformed_trajectory_array_filename = 'data/go1_transformed_trajectory_array.npy'
 
 
 # Create numpy array for the action space
