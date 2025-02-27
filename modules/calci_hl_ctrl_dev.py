@@ -770,6 +770,8 @@ class MotorControl:
         ''' Converts pose params to numeric equivalents '''
         conv_param_dict = {}
 
+        # print(f">> Raw Param Dict: {param_dict}\n")
+
         # ROLL (Body Tilt)
         if param_dict['roll'] == 'left':
             conv_param_dict['roll'] = -0.5
