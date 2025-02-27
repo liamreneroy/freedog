@@ -10,4 +10,3 @@
 # Start doing motion such as walking in circle or line or spinning on the spot or jumping
 
 
-2. Write script to calculate distance between two poses 
