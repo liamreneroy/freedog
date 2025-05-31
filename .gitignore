@@ -1,3 +1,12 @@
+# LLM Motion Scripts
+llm_motion_scripts/
+
+# LLM Vocab Scripts
+llm_vocab_scripts/
+
+# My ToDo List
+ToDo.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
