@@ -1,36 +1,37 @@
 # Go1 Free-Dog SDK for High-Level Control
 
-## Origin
-This repository is forked from: https://github.com/Bin4ry/free-dog-sdk.git. This fork provides simplified high-level control scripts for the UniTree Go1 Quadruped robot.
-
-
 ## How to Use
 
 ### Highlevel
 To run a high-level script, simple follow these steps:
 
  1. Connect to the dog via WiFi
- 2. Make sure you own WiFi IP is 192.168.12.14 (the Dog should assign you this IP automatically!), if not change the connection object accordingly!
- 3. Run the following command:
+ 2. Make sure you own WiFi IP is 192.168.12.14
+ 3. The Dog should assign you this IP automatically! If not, change the connection object accordingly.
+ 4. Run the following command:
 ```
 python3 calci_startup.py
 ```
+
 This startup script puts the dog into a standing state no matter of it's original state. Use this if the dog is laying down, it will stand. If it was already standing, it will move slightly.
+
  4. Run one of the other control scripts:
 ```
 python3 calci_pose.py
 python3 calci_pushup.py
 python3 calci_dance.py
 ```
-If everything it working correctly, the robot will follow the direction of the control script! :) 
+
+If everything it working correctly, the robot will follow the direction of the control script! :)
+
 5. When you're done, run the terminate control script. This will make the dog lay back down and go into idle state:
 ```
 python3 calci_terminate.py
 ```
 
 
-### Lowlevel (Untested)
-There are three LowLevel examples currently hidden in 'extra':
+### Lowlevel | Minimally Tested
+There are three LowLevel examples currently hidden in 'example_scripts':
 
  - example_position(lowlevel).py -> The dog will do positioning with the front right leg.
  - example_torque(lowlevel).py --> The dog will put a torque to the front right leg, you can try to push against the torque to see it in action. (Don't go too hard!)
@@ -81,6 +82,9 @@ example_velocity(lowlevel).py
 The dog should move now, fully controlled via Lowlevel. Congratulations :)
 
 
+
+## Origin
+This repository is forked from: https://github.com/Bin4ry/free-dog-sdk.git. This fork provides simplified high-level control scripts for the UniTree Go1 Quadruped robot.
 
 
 ## Looking for Quadruped friends?
