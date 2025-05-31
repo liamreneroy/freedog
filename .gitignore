@@ -4,8 +4,11 @@ llm_motion_files/
 # LLM Vocab Scripts
 llm_vocab_files/
 
+# Archive
+archive/
+
 # My ToDo List
-./ToDo.txt
+ToDo.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
