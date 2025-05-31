@@ -15,7 +15,7 @@ python3 calci_startup.py
 
 This startup script puts the dog into a standing state no matter of it's original state. Use this if the dog is laying down, it will stand. If it was already standing, it will move slightly.
 
- 4. Run one of the other control scripts:
+ 5. Run one of the other control scripts:
 ```
 python3 calci_pose.py
 python3 calci_pushup.py
@@ -24,7 +24,7 @@ python3 calci_dance.py
 
 If everything it working correctly, the robot will follow the direction of the control script! :)
 
-5. When you're done, run the terminate control script. This will make the dog lay back down and go into idle state:
+6. When you're done, run the terminate control script. This will make the dog lay back down and go into idle state:
 ```
 python3 calci_terminate.py
 ```
