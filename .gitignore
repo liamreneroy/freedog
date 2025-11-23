@@ -10,7 +10,8 @@ llm_vocab_files/
 # My ToDo List
 ToDo.txt
 
-
+# Apple junk files
+.DS_Store
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -43,3 +44,4 @@ MANIFEST
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
+
