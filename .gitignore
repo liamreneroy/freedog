@@ -1,14 +1,16 @@
 # Archive
 archive/
 
-# LLM Motion Scripts
+# Extra LLM Motion Scripts
 llm_motion_files/
 
-# LLM Vocab Scripts
+# Extra LLM Vocab Scripts
 llm_vocab_files/
 
 # My ToDo List
 ToDo.txt
+
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

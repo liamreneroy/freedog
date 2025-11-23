@@ -819,8 +819,15 @@ class MotorControl:
         # BODY_DIRECTION (yaw angle of the robots whole body)
         if param_dict['body_direction'] == 'user':
             conv_param_dict['body_direction'] = 0.0
-        elif param_dict['body_direction'] == 'object':
-            conv_param_dict['body_direction'] = 90 * math.pi / 180
+        elif param_dict['body_direction'] == 'object_left':
+            conv_param_dict['body_direction'] = +90 * math.pi / 180
+        elif param_dict['body_direction'] == 'object_right':
+            conv_param_dict['body_direction'] = -90 * math.pi / 180
+
+        # OLD 
+        # elif param_dict['body_direction'] == 'object':
+        #     conv_param_dict['body_direction'] = 90 * math.pi / 180
+
 
 
         # POSE DURATION
