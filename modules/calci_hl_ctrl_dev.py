@@ -843,9 +843,9 @@ class MotorControl:
 
         # VELOCITY
         if param_dict['velocity'] == 'slow':
-            conv_param_dict['velocity'] = 0.5
+            conv_param_dict['velocity'] = 0.2  # reset to 0.5
         elif param_dict['velocity'] == 'medium':
-            conv_param_dict['velocity'] = 1.0
+            conv_param_dict['velocity'] = 0.8  # reset to 1.0
         elif param_dict['velocity'] == 'fast':
             conv_param_dict['velocity'] = 2.0
         else:
@@ -856,7 +856,7 @@ class MotorControl:
         if param_dict['smoothness'] == 'smooth':
             conv_param_dict['smoothness'] = 0
         elif param_dict['smoothness'] == 'shaky':
-            conv_param_dict['smoothness'] = 0.25 # reset 0.15
+            conv_param_dict['smoothness'] = 0.25   # reset 0.15
         else:
             raise ValueError("smoothness must be one of the following: ['smooth', 'shaky']\n")
 
