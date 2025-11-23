@@ -34,11 +34,11 @@ go1_motion_parameters = {
     "2": ["backward", "neutral", "forward"],        # Body Lean
     "3": ["low", "neutral", "high"],                # Body Height
     "4": ["smooth", "shaky"],                       # Motion Smoothness
-    "5": ["slow", "medium", "fast"]                 # Motion Velocity
+    "5": ["slow", "fast"]                           # Motion Velocity
     }
 
 # Create an array for the action space with lists of motion parameters 
-go1_action_space_shape = (3, 3, 3, 3, 2, 3)
+go1_action_space_shape = (3, 3, 3, 3, 2, 2)   # <- shape not indexes
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -118,12 +118,6 @@ def load_or_generate_action_space(array_filename, motion_parameters, action_spac
 
             # Add the list "angle_height_log_list" as the entry to go1_trajectory_lists at the entry (1, 2, 1, 2, 1, 1)
             trajectory_lists[idx] = angle_height_log_list
-
-            # # Test that it worked by printing the list at the entry (1, 2, 1, 2, 1, 1)
-            # print("\n::: Testing Action Space Entry\n")
-            # print("::: Action Space Entry (1, 2, 1, 2, 1, 1)\n")
-            # print(*go1_trajectory_lists[idx][20].items(), sep='\n')
-
 
         # # Save the action space to to a numpy file
         print(f"\n::: Saving Action Space to File: {array_filename}\n")

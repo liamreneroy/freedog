@@ -843,9 +843,9 @@ class MotorControl:
 
         # VELOCITY
         if param_dict['velocity'] == 'slow':
-            conv_param_dict['velocity'] = 0.2  # reset to 0.5
-        elif param_dict['velocity'] == 'medium':
-            conv_param_dict['velocity'] = 0.8  # reset to 1.0
+            conv_param_dict['velocity'] = 0.4  # reset to 0.5
+        # elif param_dict['velocity'] == 'medium':
+        #     conv_param_dict['velocity'] = 1.0
         elif param_dict['velocity'] == 'fast':
             conv_param_dict['velocity'] = 2.0
         else:
