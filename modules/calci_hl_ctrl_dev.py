@@ -832,11 +832,11 @@ class MotorControl:
 
         # POSE DURATION
         if param_dict['pose_duration'] == 'short':
-            conv_param_dict['pose_duration'] = 1.0
+            conv_param_dict['pose_duration'] = 2.0
         elif param_dict['pose_duration'] == 'medium':
-            conv_param_dict['pose_duration'] = 4.0
+            conv_param_dict['pose_duration'] = 6.0
         elif param_dict['pose_duration'] == 'long':
-            conv_param_dict['pose_duration'] = 8.0
+            conv_param_dict['pose_duration'] = 12.0
         else:
             raise ValueError("pose_duration must be one of the following: ['short', 'medium', 'long']\n")
         
