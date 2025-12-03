@@ -54,9 +54,9 @@ def main():
                                                         'body_direction': 'user',           # P1   "user" or "object_left" or "object_right" 
                                                         'roll': 'neutral',                  # P2   "left" or "neutral" or "right"
                                                         'pitch': 'neutral',                 # P3   "backward" or "neutral" or "forward"
-                                                        'body_height': 'neutral',           # P4   "low" or "neutral" or "high"
-                                                        'smoothness': 'smooth',             # P5   "smooth" or "shaky"
-                                                        'velocity': 'slow',                 # P6   "slow" or "fast"
+                                                        'body_height': 'high',           # P4   "low" or "neutral" or "high"
+                                                        'smoothness': 'shaky',             # P5   "smooth" or "shaky"
+                                                        'velocity': 'fast',                 # P6   "slow" or "fast"
                                                         'yaw': 'neutral',                   # Leave Neutral
                                                         'pose_duration': 'long'             # Leave Long
                                                         },

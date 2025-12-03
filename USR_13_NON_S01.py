@@ -56,7 +56,7 @@ def main():
                                                         'pitch': 'neutral',                 # P3   "backward" or "neutral" or "forward"
                                                         'body_height': 'neutral',           # P4   "low" or "neutral" or "high"
                                                         'smoothness': 'smooth',             # P5   "smooth" or "shaky"
-                                                        'velocity': 'slow',                 # P6   "slow" or "fast"
+                                                        'velocity': 'fast',                 # P6   "slow" or "fast"
                                                         'yaw': 'neutral',                   # Leave Neutral
                                                         'pose_duration': 'long'             # Leave Long
                                                         },
