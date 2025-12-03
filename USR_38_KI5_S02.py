@@ -51,10 +51,10 @@ def main():
                                     sleep_override=None,
                                     move_to_pose_base_time = 1.5,
                                     pose_raw_param_dict = {                                 # OBJECT_LEFT = BOX   ||  OBJECT_RIGHT = CHARGER
-                                                        'body_direction': 'object_left',    # P1   "user" or "object_left" or "object_right" 
+                                                        'body_direction': 'user',           # P1   "user" or "object_left" or "object_right" 
                                                         'roll': 'neutral',                  # P2   "left" or "neutral" or "right"
-                                                        'pitch': 'forward',                 # P3   "backward" or "neutral" or "forward"
-                                                        'body_height': 'low',           # P4   "low" or "neutral" or "high"
+                                                        'pitch': 'neutral',                 # P3   "backward" or "neutral" or "forward"
+                                                        'body_height': 'neutral',           # P4   "low" or "neutral" or "high"
                                                         'smoothness': 'smooth',             # P5   "smooth" or "shaky"
                                                         'velocity': 'slow',                 # P6   "slow" or "fast"
                                                         'yaw': 'neutral',                   # Leave Neutral
